@@ -178,7 +178,7 @@ CUSTOM_CSS = """
 
 #welcome-hero {
   text-align: center;
-  padding: 72px 32px 42px;
+  padding: 42px 32px 18px;
   max-width: 620px;
   margin: 0 auto;
 }
@@ -198,7 +198,7 @@ CUSTOM_CSS = """
 #welcome-hero h3 { font-size: 18px; margin: 0 0 10px; color: var(--primary); }
 #welcome-hero p { color: var(--muted); font-size: 16px; line-height: 1.65; margin: 0; }
 
-#chatbot { border: 0; padding: 24px 28px 8px; min-height: 455px; }
+#chatbot { border: 0; padding: 12px 28px 8px; min-height: 220px; }
 #chatbot .message-wrap { max-width: 78%; }
 #chatbot .user-message { background: var(--primary) !important; color: white !important; border-radius: 18px 18px 4px 18px !important; }
 #chatbot .bot-message { background: #fff !important; color: var(--text) !important; border: 1px solid var(--border) !important; border-radius: 18px 18px 18px 4px !important; box-shadow: 0 8px 22px rgba(17, 24, 39, .05); }
@@ -223,8 +223,8 @@ CUSTOM_CSS = """
   #sidebar { min-width: 100% !important; flex-basis: auto !important; border-right: 0; border-bottom: 1px solid var(--border); padding: 18px; }
   .sidebar-card { display: none; }
   .topbar { padding: 0 18px; }
-  #welcome-hero { padding: 42px 22px 24px; }
-  #chatbot { padding: 16px; min-height: 380px; }
+  #welcome-hero { padding: 28px 22px 16px; }
+  #chatbot { padding: 12px 16px 8px; min-height: 180px; }
   #chatbot .message-wrap { max-width: 92%; }
   .composer { padding: 14px 16px 20px; }
 }
@@ -471,7 +471,7 @@ def build_app() -> gr.Blocks:
                         value=[],
                         elem_id="chatbot",
                         show_label=False,
-                        height=455,
+                        height=220,
                         avatar_images=(None, None),
                     )
                     with gr.Column(elem_classes="composer"):
