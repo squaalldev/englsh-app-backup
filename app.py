@@ -17,12 +17,13 @@ from typing import Any
 import gradio as gr
 
 
-MISSING_INFO_MESSAGE = """Claro. Para crear mejores encabezados necesito solo 4 datos:
+MISSING_INFO_MESSAGE = """Claro. Para crear mejores encabezados necesito solo 3 datos:
 
 1. ¿Qué vendes?
 2. ¿Para quién es?
 3. ¿Qué resultado quiere conseguir esa persona?
-4. ¿Cuántos encabezados quieres?"""
+
+Si no indicas cantidad, generaré 5 encabezados por defecto."""
 
 STYLE_LABELS = {
     "default": "claros y persuasivos",
@@ -142,7 +143,7 @@ def _extract_count(user_message: str) -> int:
     for word, value in number_words.items():
         if re.search(rf"\b{word}\b", text):
             return value
-    return 10
+    return 5
 
 
 def _history_path(namespace: str = CHAT_NAMESPACE) -> Path:
@@ -205,7 +206,7 @@ def clear_chat_history(namespace: str = CHAT_NAMESPACE) -> None:
 
 
 def is_greeting(text: str, history: list[dict[str, Any]] | None = None) -> bool:
-    """Detects a short first-message greeting and starts the four-data flow."""
+    """Detects a short first-message greeting and starts the three-data flow."""
     normalized = _normalize(text)
     greetings = [
         "hola",
@@ -279,12 +280,7 @@ def is_request_complete(user_message: str) -> bool:
             "tomar decisiones",
         ]
     )
-    has_count = bool(re.search(r"\b\d{1,2}\b", text)) or any(
-        re.search(rf"\b{word}\b", text)
-        for word in ["cinco", "seis", "siete", "ocho", "nueve", "diez", "once", "doce"]
-    )
-
-    return has_offer and has_audience and has_result and has_count
+    return has_offer and has_audience and has_result
 
 
 def detect_style_request(user_message: str) -> str:
@@ -356,7 +352,7 @@ No hagas diagnóstico.
 No hagas estrategia.
 No escribas emails.
 No agregues pasos extra.
-No pidas más datos si el usuario ya dio qué vende, para quién es, resultado deseado y cantidad.
+No pidas cantidad de encabezados. Si el usuario no indica cantidad, genera 5 encabezados.
 
 Devuelve siempre Markdown con este formato exacto:
 
@@ -382,10 +378,10 @@ Solicitud del usuario:
 Estilo solicitado:
 {style_instruction}
 
-Cantidad de encabezados solicitada:
+Cantidad de encabezados:
 {count}
 
-Genera exactamente {count} encabezados en español.
+Genera exactamente {count} encabezados en español. Si el usuario no pidió una cantidad explícita, usa 5.
 """.strip()
 
     return [
@@ -600,7 +596,7 @@ def build_app() -> gr.Blocks:
                             show_label=False,
                             lines=1,
                             max_lines=4,
-                            placeholder="Escribe aquí tus instrucciones",
+                            placeholder="Ej. Vendo un taller de Diseño Humano para mujeres emprendedoras que quieren tomar decisiones con más claridad.",
                             scale=10,
                         )
                         send = gr.Button("↑", elem_id="send-btn", variant="primary", scale=1)

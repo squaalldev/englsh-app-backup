@@ -14,13 +14,12 @@ Headline Booster is a small-model-ready Gradio chatbot that helps entrepreneurs 
 
 ## What it does
 
-The user gives four simple pieces of information:
+The user gives three simple pieces of information:
 1. What they sell
 2. Who it is for
 3. The result the audience wants
-4. How many headlines they want
 
-The app then generates persuasive headline options.
+The app then generates 5 persuasive headline options by default.
 
 ## How to run locally
 
@@ -63,7 +62,7 @@ python app.py
 
 Headline Booster now behaves like a focused chatbot instead of a static generator:
 
-- Short greetings like `hola` start the conversation and ask only for the four required data points.
+- Short greetings like `hola` start the conversation and ask only for the three required data points.
 - The chat shows `La IA está trabajando...` while the model prepares the answer.
 - The frontend no longer shows example buttons or a model selector, keeping the screen focused on one chat input.
 - A lightweight JSON history is saved locally per Gradio session/user namespace and cleared with `+ Nuevo chat`; no login, database, payments, or external API is required.
@@ -72,7 +71,7 @@ Headline Booster now behaves like a focused chatbot instead of a static generato
 
 The app uses faster defaults for the first public Space version:
 
-- `MAX_NEW_TOKENS=280` keeps the tiny model focused on headline output instead of long generations.
+- `MAX_NEW_TOKENS=280` keeps the tiny model focused on 5 headline options instead of long generations.
 - The old character-by-character streaming helper was removed; the app now swaps a working message for the final answer.
 - Use `USE_REAL_MODEL=false` only when iterating on visual design locally.
 

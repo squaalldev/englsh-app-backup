@@ -43,7 +43,7 @@ MODEL_ID=Qwen/Qwen2.5-3B-Instruct
 
 ## Why this fits the app
 
-Headline generation is a narrow task. The app constrains the input to four details and constrains the output to a fixed Markdown format, which makes it a good fit for a tiny model.
+Headline generation is a narrow task. The app constrains the input to three details and constrains the output to a fixed Markdown format, which makes it a good fit for a tiny model.
 
 ## Step 1 completed
 
@@ -56,4 +56,4 @@ Headline generation is a narrow task. The app constrains the input to four detai
 
 ## Performance defaults
 
-For the first public Tiny Titan path, the app limits generation to `MAX_NEW_TOKENS=280` by default and removed character-by-character response streaming. The UI now shows a working message while the model runs, then swaps in the final answer.
+For the first public Tiny Titan path, the app generates 5 headlines by default, limits generation to `MAX_NEW_TOKENS=280`, and removes character-by-character response streaming. The UI now shows a working message while the model runs, then swaps in the final answer.
