@@ -21,9 +21,7 @@ MISSING_INFO_MESSAGE = """Claro. Para crear mejores encabezados necesito solo 3 
 
 1. ¿Qué vendes?
 2. ¿Para quién es?
-3. ¿Qué resultado quiere conseguir esa persona?
-
-Si no indicas cantidad, generaré 5 encabezados por defecto."""
+3. ¿Qué resultado quiere conseguir esa persona?"""
 
 STYLE_LABELS = {
     "default": "claros y persuasivos",

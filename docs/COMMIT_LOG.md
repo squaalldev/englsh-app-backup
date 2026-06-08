@@ -15,8 +15,8 @@ The repository should keep `main` and `codex` pointing to the same final commit 
 | Commit | Summary | Notes |
 | --- | --- | --- |
 | `497c903` | Primer guardado del proyecto | Original repository checkpoint before the Headline Booster migration. |
-| `648c17f` | Migrate repository to Headline Booster Gradio Space (add `app.py`, remove full-stack backend/frontend) | Codex-assisted migration from the previous React/FastAPI/Supabase product to a focused Gradio Space with mock generation, Tiny Titan model runtime wiring, custom frontend CSS, Hugging Face README metadata, chatbot interaction flow, performance defaults, dark chat frontend, and documentation. |
-| `HEAD` | Refine frontend scale and default headline count | Adjusts dark UI sizing, reduces assistant message typography, and changes incomplete-input flow to ask for 3 details while generating 5 headlines by default. Use `git log --oneline -1` for the exact hash because embedding the current commit hash in this same file would change that hash. |
+| `d4e3476` | Migrate to Headline Booster Gradio Space: add `app.py`, remove backend/frontend | Codex-assisted migration from the previous React/FastAPI/Supabase product to a focused Gradio Space with mock generation, Tiny Titan model runtime wiring, custom frontend CSS, Hugging Face README metadata, chatbot interaction flow, performance defaults, dark chat frontend, and documentation. |
+| `HEAD` | Polish responsive chat frontend | Removes the default-count sentence from user-facing prompts, improves chat bubble styling, adds custom dark scrollbars, and tightens desktop/mobile responsive sizing. Use `git log --oneline -1` for the exact hash because embedding the current commit hash in this same file would change that hash. |
 
 ## Codex evidence checklist
 
