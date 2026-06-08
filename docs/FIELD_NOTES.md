@@ -2,16 +2,16 @@
 
 ## Problem
 
-Many entrepreneurs struggle to write clear headlines because they try to explain too much, sound generic, or do not connect the offer to the audience's desired result.
+Many entrepreneurs write weak headlines that describe a topic but do not communicate why a reader should care. A headline can be short and still fail if it lacks a clear outcome, emotional tension, specificity, or a differentiated angle.
 
 ## Small model angle
 
-Headline generation is a narrow, structured task. A tiny model can perform well if the input is constrained to three pieces of information and the output format is fixed. The first real-model target is Qwen/Qwen2.5-1.5B-Instruct, with Qwen/Qwen2.5-3B-Instruct as an under-4B quality fallback.
+Headline optimization is a narrow, structured task. The backend can calculate the diagnosis deterministically and ask a small model only for the creative part: three improved headline versions and a winner.
 
 ## Design decision
 
-The app asks only three questions and focuses on one job: generating headlines.
+The app now uses a single input: the user's current headline. It does not ask for optional context or headline counts. The frontend renders a fixed report so the experience feels like a headline coach rather than a generic chatbot.
 
 ## Future work
 
-Test Qwen/Qwen2.5-1.5B-Instruct on ZeroGPU, compare it against Qwen/Qwen2.5-3B-Instruct, and keep the smallest model that produces strong Spanish headline quality.
+Test `Qwen/Qwen2.5-1.5B-Instruct` on Hugging Face Spaces, compare the quality of the three model-generated versions against the mock fallback, and keep tightening the prompt while preserving the stable JSON output contract.

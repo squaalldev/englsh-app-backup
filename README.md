@@ -8,48 +8,86 @@ colorTo: yellow
 pinned: true
 sdk_version: 6.17.3
 ---
-# Headline Booster
+# Headline Booster AI
 
-Headline Booster is a small-model-ready Gradio chatbot that helps entrepreneurs create clearer, stronger headlines in seconds.
+Headline Booster AI is a small-model-ready headline optimizer for Hugging Face Spaces. The app takes one weak headline and returns a fixed, structured improvement report: diagnosis, missing elements, three stronger versions, a mini battle, and one winner.
 
 ## What it does
 
-The user gives three simple pieces of information:
-1. What they sell
-2. Who it is for
-3. The result the audience wants
+The user pastes a single headline, for example:
 
-The app then generates 5 persuasive headline options by default.
+```text
+Aprende Diseño Humano
+```
+
+The backend always returns:
+
+1. Diagnosis scores for clarity, desire, specificity, and differentiation
+2. The main problem with the headline
+3. Four missing elements
+4. Three improved versions
+5. A mini battle
+6. The winning headline
+7. A short explanation of why it wins
 
 ## How to run locally
 
 ```bash
 pip install -r requirements.txt
-python app.py
+USE_REAL_MODEL=false python app.py
 ```
 
-## Hackathon alignment
+Then open the local URL printed by Gradio, usually `http://127.0.0.1:7860`.
 
-- Built with Gradio
-- Designed for Hugging Face Spaces
-- Prepared for a small model under 32B parameters
-- Tiny Titan target model: Qwen/Qwen2.5-1.5B-Instruct
-- Quality fallback model: Qwen/Qwen2.5-3B-Instruct
-- Tiny model mode by default
-- Local visual-development fallback via USE_REAL_MODEL=false
-- No model selector in the public interface
-- ZeroGPU integration prepared
+## API
+
+### `GET /health`
+
+Returns runtime metadata and confirms that the app is alive.
+
+### `POST /api/improve_headline`
+
+Request:
+
+```json
+{
+  "headline": "Titular escrito por el usuario"
+}
+```
+
+Response shape is stable:
+
+```json
+{
+  "ok": true,
+  "app_build": "headline-optimizer-clean-2026-06-08",
+  "runtime": "model",
+  "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+  "titular_original": "Titular escrito por el usuario",
+  "diagnostico": {
+    "claridad": 0,
+    "deseo": 0,
+    "especificidad": 0,
+    "diferenciacion": 0
+  },
+  "problema_principal": "Explicación breve del principal problema del titular.",
+  "falta": ["Elemento 1", "Elemento 2", "Elemento 3", "Elemento 4"],
+  "versiones": ["Versión clara", "Versión emocional", "Versión curiosa"],
+  "mini_battle": {"mas_claro": 1, "mas_emocional": 2, "mas_curioso": 3},
+  "ganador_numero": 1,
+  "ganador": "Titular ganador",
+  "por_que_gana": "Explicación breve."
+}
+```
 
 ## Architecture
 
 ```text
 .
-├── app.py
+├── app.py          # Gradio Server backend/API
+├── index.html     # Complete custom frontend: HTML, CSS, and JavaScript
 ├── requirements.txt
 ├── README.md
-├── frontend/
-│   ├── README.md
-│   └── styles.css
 └── docs/
     ├── CODEX_NOTES.md
     ├── COMMIT_LOG.md
@@ -58,37 +96,30 @@ python app.py
     └── TINY_TITAN_PLAN.md
 ```
 
-## Chatbot behavior
+The visual interface is no longer built with `gr.Blocks()`. `index.html` owns the UI and calls `POST /api/improve_headline` with `fetch()`. Browser history is stored only in `localStorage`; the backend does not persist sessions.
 
-Headline Booster now behaves like a focused chatbot instead of a static generator:
+## Hackathon alignment
 
-- Short greetings like `hola` start the conversation and ask only for the three required data points.
-- The chat shows `La IA está trabajando...` while the model prepares the answer.
-- The frontend no longer shows example buttons or a model selector, keeping the screen focused on one chat input.
-- A lightweight JSON history is saved locally per Gradio session/user namespace and cleared with `+ Nuevo chat`; no login, database, payments, or external API is required.
+- Built on Gradio Server for Hugging Face Spaces
+- Custom frontend with a single headline input
+- Prepared for a small model under 32B parameters
+- Tiny Titan target model: `Qwen/Qwen2.5-1.5B-Instruct`
+- Mock fallback if the model fails or returns invalid JSON
+- No OpenAI, Claude, paid API, database, login, or external generation service
 
-## Performance defaults
-
-The app uses faster defaults for the first public Space version:
-
-- `MAX_NEW_TOKENS=280` keeps the tiny model focused on 5 headline options instead of long generations.
-- The old character-by-character streaming helper was removed; the app now swaps a working message for the final answer.
-- Use `USE_REAL_MODEL=false` only when iterating on visual design locally.
-
-## Tiny Titan model mode
-
-The app uses the tiny model path by default. For explicit Tiny Titan configuration, set:
+## Runtime configuration
 
 ```bash
-USE_REAL_MODEL=true
 MODEL_ID=Qwen/Qwen2.5-1.5B-Instruct
+MAX_NEW_TOKENS=280
+USE_REAL_MODEL=auto
 ```
 
-If the 1.5B model needs stronger copywriting quality, use the under-4B fallback:
+Runtime rules:
 
-```bash
-MODEL_ID=Qwen/Qwen2.5-3B-Instruct
-```
+- `USE_REAL_MODEL=true`: use the Hugging Face model.
+- `USE_REAL_MODEL=false`: use the mock fallback.
+- `USE_REAL_MODEL=auto`: use the model on Hugging Face Spaces and mock locally.
 
 ## Source code
 

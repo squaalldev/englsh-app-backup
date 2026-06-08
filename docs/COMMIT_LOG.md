@@ -16,14 +16,14 @@ The repository should keep `main` and `codex` pointing to the same final commit 
 | --- | --- | --- |
 | `497c903` | Primer guardado del proyecto | Original repository checkpoint before the Headline Booster migration. |
 | `b1f3f74` | Migrate repo to Headline Booster Gradio Space — add Gradio app and remove legacy backend/frontend | Codex-assisted migration from the previous React/FastAPI/Supabase product to a focused Gradio Space with mock generation, Tiny Titan model runtime wiring, custom frontend CSS, Hugging Face README metadata, chatbot interaction flow, performance defaults, dark chat frontend, and documentation. |
-| `HEAD` | Polish responsive chat frontend | Removes the default-count sentence from user-facing prompts, improves chat bubble styling, adds custom dark scrollbars, and tightens desktop/mobile responsive sizing. Use `git log --oneline -1` for the exact hash because embedding the current commit hash in this same file would change that hash. |
+| `HEAD` | Convert to custom index.html frontend and Gradio Server API | Replaces the old `gr.Blocks()` UI with a custom `index.html`, exposes `/health` and `POST /api/improve_headline`, stores history in browser `localStorage`, and guarantees a fixed headline-optimizer JSON contract. Use `git log --oneline -1` for the exact hash because embedding the current commit hash in this same file would change that hash. |
 
 ## Codex evidence checklist
 
 - Real code changes were made in `app.py`.
 - The repository was simplified for Hugging Face Spaces.
 - External AI API dependencies were removed for the first mock version.
-- Tiny Titan model integration wiring was added for `Qwen/Qwen2.5-1.5B-Instruct` with `Qwen/Qwen2.5-3B-Instruct` as fallback.
+- Tiny Titan model integration wiring was added for `Qwen/Qwen2.5-1.5B-Instruct` with a deterministic mock fallback.
 - Documentation was added in `README.md`, `docs/CODEX_NOTES.md`, `docs/FIELD_NOTES.md`, `docs/FRONTEND_REFERENCE_NOTES.md`, and `docs/TINY_TITAN_PLAN.md`.
 - This commit log records the migration history for reviewers.
 

@@ -2,37 +2,36 @@
 
 ## Source reviewed
 
-The visual reference is the `frontend-reference/` folder from the public GitHub repository. It is a separate Gradio/custom-frontend app called **Road B: The Other Screen**.
+The latest visual target was the provided screenshot: a clean white sidebar on the left and a light, minimal main panel with a large circular avatar, centered title, concise product explanation, and fixed lower input.
 
 ## What was borrowed
 
-Headline Booster borrows visual ideas only:
+Headline Booster AI borrows visual ideas only:
 
-- a dark two-column layout;
-- a wider previous-chats sidebar;
-- a centered hero/logo area;
-- a minimal lower composer;
-- a cleaner app surface with the old top navigation removed.
+- a white left sidebar;
+- a strong brand block at the top;
+- a large brown `+ Nuevo titular` button;
+- a `HISTORIAL LOCAL` area;
+- a centered hero with circular avatar;
+- a clean bottom composer with one text field and a send button;
+- generous spacing, soft cards, and a warm brown accent.
 
 ## What was not copied
 
-The Road B product logic was not copied. Headline Booster does not use:
+The app does not copy unrelated product logic. It does not include:
 
-- alternate-self game state;
-- Echo Artifacts;
-- souvenir cards;
-- trace export;
-- Modal endpoints;
-- llama.cpp runtime yet;
-- Road B prompts or narrative mechanics.
+- example chips under the hero;
+- model selector controls;
+- context fields;
+- usage counters;
+- status text such as `disponible`;
+- topbar navigation;
+- backend session history.
 
 ## How it is used in this app
 
-The runtime app is still `app.py`. The visual layer lives in `frontend/styles.css` and is passed into Gradio at launch time. The app now follows the dark reference layout while keeping Gradio as the only frontend runtime.
+The visual layer now lives entirely in `index.html`. The file contains the markup, styles, and JavaScript needed for the interface. It calls `fetch('/api/improve_headline')` and stores user sessions in `localStorage` so each browser has its own private local history.
 
-## Future adaptation path
+## Responsive strategy
 
-If more of the reference app is needed, copy only reusable static assets into `frontend/assets/`, then translate the look into Gradio HTML/CSS. Do not reintroduce a separate React/Vite build or external API dependency for the first Headline Booster version.
-## CSS reference pass
-
-The Hugging Face `chatbot_mail` CSS reference was reviewed for its practical frontend justification: explicit component targeting, full-width sidebar buttons, compact button heights, clear hover states, constrained main content width, and stronger `!important` overrides where the framework injects styles. Headline Booster applies the same idea in `frontend/styles.css` while translating it from Streamlit selectors to Gradio selectors.
+The layout uses a two-column desktop grid and collapses to a single-column mobile layout. The sidebar becomes a top history panel on smaller screens, the hero scales down, and the composer remains easy to reach at the bottom.
