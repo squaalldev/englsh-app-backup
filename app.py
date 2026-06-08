@@ -8,6 +8,7 @@ inference function when Qwen2.5-3B-Instruct is added.
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Any
 
 import gradio as gr
@@ -91,144 +92,7 @@ STYLE_HEADLINES = {
     ],
 }
 
-CUSTOM_CSS = """
-:root {
-  --bg: #f8fafc;
-  --surface: #ffffff;
-  --border: #e5e7eb;
-  --text: #111827;
-  --muted: #6b7280;
-  --primary: #8a5a44;
-  --primary-dark: #6f4635;
-  --accent: #8b5cf6;
-  --success: #22c55e;
-}
-
-.gradio-container {
-  background: var(--bg) !important;
-  color: var(--text) !important;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-  min-height: 100vh;
-}
-
-#headline-app {
-  max-width: 1180px;
-  min-height: 92vh;
-  margin: 24px auto;
-  border: 1px solid var(--border);
-  border-radius: 28px;
-  overflow: hidden;
-  background: var(--surface);
-  box-shadow: 0 24px 70px rgba(17, 24, 39, 0.08);
-}
-
-#headline-layout { gap: 0; min-height: 92vh; }
-#sidebar {
-  flex: 0 0 280px !important;
-  min-width: 280px !important;
-  background: #fbf7f4;
-  border-right: 1px solid var(--border);
-  padding: 24px 18px;
-}
-#sidebar h1 { font-size: 24px; line-height: 1.1; margin: 0 0 8px; color: var(--text); }
-#sidebar p { color: var(--muted); margin: 0 0 22px; }
-.sidebar-card {
-  border: 1px solid #eadbd2;
-  background: rgba(255,255,255,.72);
-  border-radius: 18px;
-  padding: 14px;
-  margin-top: 18px;
-}
-.sidebar-title { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; }
-.example-convo {
-  padding: 11px 12px;
-  border-radius: 14px;
-  margin: 8px 0;
-  background: var(--surface);
-  border: 1px solid transparent;
-  color: #374151;
-  font-weight: 600;
-  font-size: 14px;
-}
-.example-convo:hover { border-color: #eadbd2; }
-#new-chat { width: 100%; }
-#new-chat button, #send-btn button {
-  background: var(--primary) !important;
-  color: #fff !important;
-  border: 0 !important;
-  border-radius: 16px !important;
-  font-weight: 800 !important;
-  box-shadow: 0 10px 24px rgba(138, 90, 68, .22) !important;
-}
-#new-chat button:hover, #send-btn button:hover { background: var(--primary-dark) !important; }
-
-#main-panel { padding: 0; background: var(--surface); min-width: 0; }
-.topbar {
-  height: 74px;
-  padding: 0 28px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.topbar h2 { margin: 0; font-size: 18px; }
-.status-wrap { display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 14px; }
-.status-dot { color: var(--success); font-size: 18px; line-height: 0; }
-.settings-icon { width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 999px; display: grid; place-items: center; background: #fff; }
-
-#welcome-hero {
-  text-align: center;
-  padding: 42px 32px 18px;
-  max-width: 620px;
-  margin: 0 auto;
-}
-.avatar {
-  width: 112px;
-  height: 112px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  margin: 0 auto 18px;
-  background: linear-gradient(135deg, #fff7ed, #ede9fe);
-  border: 1px solid #eadbd2;
-  box-shadow: 0 18px 40px rgba(139, 92, 246, .14);
-  font-size: 54px;
-}
-#welcome-hero h2 { font-size: 28px; margin: 0 0 8px; }
-#welcome-hero h3 { font-size: 18px; margin: 0 0 10px; color: var(--primary); }
-#welcome-hero p { color: var(--muted); font-size: 16px; line-height: 1.65; margin: 0; }
-
-#chatbot { border: 0; padding: 12px 28px 8px; min-height: 220px; }
-#chatbot .message-wrap { max-width: 78%; }
-#chatbot .user-message { background: var(--primary) !important; color: white !important; border-radius: 18px 18px 4px 18px !important; }
-#chatbot .bot-message { background: #fff !important; color: var(--text) !important; border: 1px solid var(--border) !important; border-radius: 18px 18px 18px 4px !important; box-shadow: 0 8px 22px rgba(17, 24, 39, .05); }
-
-.composer {
-  border-top: 1px solid var(--border);
-  padding: 18px 28px 24px;
-  background: linear-gradient(180deg, rgba(255,255,255,.86), #fff);
-}
-#message-input textarea {
-  border-radius: 18px !important;
-  border: 1px solid var(--border) !important;
-  box-shadow: none !important;
-  padding: 14px 16px !important;
-  min-height: 58px !important;
-}
-.helper-text { color: var(--muted); font-size: 12px; margin-top: 8px; }
-
-@media (max-width: 760px) {
-  #headline-app { margin: 0; min-height: 100vh; border-radius: 0; border: 0; }
-  #headline-layout { flex-direction: column; }
-  #sidebar { min-width: 100% !important; flex-basis: auto !important; border-right: 0; border-bottom: 1px solid var(--border); padding: 18px; }
-  .sidebar-card { display: none; }
-  .topbar { padding: 0 18px; }
-  #welcome-hero { padding: 28px 22px 16px; }
-  #chatbot { padding: 12px 16px 8px; min-height: 180px; }
-  #chatbot .message-wrap { max-width: 92%; }
-  .composer { padding: 14px 16px 20px; }
-}
-"""
+CUSTOM_CSS = (Path(__file__).parent / "frontend" / "styles.css").read_text(encoding="utf-8")
 
 
 def _normalize(text: str) -> str:
@@ -428,6 +292,8 @@ def build_app() -> gr.Blocks:
                 with gr.Column(elem_id="sidebar", scale=0, min_width=280):
                     gr.HTML(
                         """
+                        <div class="brand-mark">HB</div>
+                        <div class="brand-kicker">headline lab · gradio</div>
                         <h1>Headline Booster</h1>
                         <p>Encabezados claros. Copy que vende.</p>
                         """
@@ -435,6 +301,14 @@ def build_app() -> gr.Blocks:
                     new_chat = gr.Button("+ Nueva conversación", elem_id="new-chat", size="lg")
                     gr.HTML(
                         """
+                        <div class="signal-panel">
+                          <div class="signal-label">Signal controls</div>
+                          <div class="signal-row">
+                            <span class="signal-pill">mock mode</span>
+                            <span class="signal-pill">small-model ready</span>
+                          </div>
+                          <div class="signal-meter"><div class="signal-fill"></div></div>
+                        </div>
                         <div class="sidebar-card">
                           <div class="sidebar-title">Conversaciones de ejemplo</div>
                           <div class="example-convo">Taller de Diseño Humano</div>
@@ -448,7 +322,14 @@ def build_app() -> gr.Blocks:
                     gr.HTML(
                         """
                         <div class="topbar">
-                          <h2>Headline Booster</h2>
+                          <div class="top-left">
+                            <h2>Headline Booster</h2>
+                            <div class="nav-pills">
+                              <span class="nav-pill">Generador</span>
+                              <span class="nav-pill">Ejemplos</span>
+                              <span class="nav-pill">Notas</span>
+                            </div>
+                          </div>
                           <div class="status-wrap">
                             <span><span class="status-dot">●</span> disponible</span>
                             <span class="settings-icon">⚙</span>
@@ -459,10 +340,21 @@ def build_app() -> gr.Blocks:
                     welcome = gr.HTML(
                         """
                         <section id="welcome-hero">
-                          <div class="avatar">🚀</div>
+                          <div class="hero-kicker">portal de encabezados · 01</div>
+                          <div class="portal-avatar" aria-label="Booster avatar"></div>
                           <h2>Booster</h2>
                           <h3>Crea encabezados persuasivos en segundos</h3>
-                          <p>Dime qué vendes, para quién es, qué resultado prometes y cuántos encabezados quieres.</p>
+                          <p>Dime qué vendes, para quién es, qué resultado prometes y cuántos encabezados quieres. Yo te devuelvo opciones claras, memorables y listas para probar.</p>
+                          <div class="hero-actions">
+                            <span class="hero-chip">Claro</span>
+                            <span class="hero-chip">Persuasivo</span>
+                            <span class="hero-chip">Listo para usar</span>
+                          </div>
+                          <div class="metric-grid">
+                            <div class="metric-card"><strong>4 datos</strong><span>sin formularios largos</span></div>
+                            <div class="metric-card"><strong>10 ideas</strong><span>mock editable</span></div>
+                            <div class="metric-card"><strong>3B plan</strong><span>Qwen2.5 futuro</span></div>
+                          </div>
                         </section>
                         """,
                         visible=True,
@@ -485,7 +377,7 @@ def build_app() -> gr.Blocks:
                                 scale=8,
                             )
                             send = gr.Button("Enviar", elem_id="send-btn", variant="primary", scale=1)
-                        gr.HTML('<div class="helper-text">Presiona Enter para enviar · Shift+Enter para nueva línea</div>')
+                        gr.HTML('<div class="helper-text"><span>Presiona Enter para enviar · Shift+Enter para nueva línea</span><span class="runtime-note">gradio · mock · sin API externa</span></div>')
 
         message.submit(
             chat_response,

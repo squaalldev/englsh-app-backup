@@ -18,7 +18,7 @@ The useful visual ideas were the left sidebar, central chat area, soft brown pal
 
 ## What was removed
 
-- React/Vite frontend files.
+- React/Vite application files. A lightweight `frontend/` folder was added back only for Gradio CSS assets.
 - FastAPI backend files.
 - Supabase authentication and protected routes.
 - Groq, OpenAI, Google/Gemini-style external AI dependencies.
@@ -27,12 +27,14 @@ The useful visual ideas were the left sidebar, central chat area, soft brown pal
 
 ## Files created or refactored
 
-- `app.py`: new Gradio Blocks application with custom CSS, sidebar, chat UI, mock headline generation, style adjustment detection, and reset behavior.
+- `app.py`: new Gradio Blocks application with sidebar, chat UI, mock headline generation, style adjustment detection, and reset behavior.
+- `frontend/styles.css`: custom visual layer for the Gradio interface, kept separate from Python so the frontend can be adjusted without reintroducing React/Vite.
 - `requirements.txt`: simplified to the minimum Gradio dependency.
 - `README.md`: rewritten for Headline Booster and hackathon alignment.
 - `docs/CODEX_NOTES.md`: documents repository analysis and migration decisions.
 - `docs/FIELD_NOTES.md`: documents product problem, small-model angle, and future work.
 - `docs/COMMIT_LOG.md`: records the relevant Git commits for hackathon/Codex review.
+- `docs/FRONTEND_REFERENCE_NOTES.md`: explains how the Road B frontend reference was used as visual inspiration without copying product logic.
 
 ## Current status
 
