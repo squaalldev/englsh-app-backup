@@ -15,8 +15,8 @@ The repository should keep `main` and `codex` pointing to the same final commit 
 | Commit | Summary | Notes |
 | --- | --- | --- |
 | `497c903` | Primer guardado del proyecto | Original repository checkpoint before the Headline Booster migration. |
-| `2faabf9` | Migrate repository to Headline Booster Gradio Space (add Gradio app, remove full-stack backend/frontend) | Codex-assisted migration from the previous React/FastAPI/Supabase product to a focused Gradio Space with mock generation, Tiny Titan model runtime wiring, custom frontend CSS, Hugging Face README metadata, and documentation. |
-| `HEAD` | Add chatbot interaction flow | Adds the four chatbot priorities requested after the Streamlit reference review: greeting-aware onboarding, streamed Gradio responses, clickable sidebar examples, and lightweight JSON chat persistence. Use `git log --oneline -1` for the exact hash because embedding the current commit hash in this same file would change that hash. |
+| `206a732` | Migrate to Headline Booster Gradio Space — add `app.py`, remove full-stack backend/frontend | Codex-assisted migration from the previous React/FastAPI/Supabase product to a focused Gradio Space with mock generation, Tiny Titan model runtime wiring, custom frontend CSS, Hugging Face README metadata, chatbot interaction flow, and documentation. |
+| `HEAD` | Tune performance defaults | Reduces default tiny-model generation length and batches Gradio streaming updates to make the Space feel faster. Use `git log --oneline -1` for the exact hash because embedding the current commit hash in this same file would change that hash. |
 
 ## Codex evidence checklist
 

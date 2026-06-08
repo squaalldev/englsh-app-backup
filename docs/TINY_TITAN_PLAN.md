@@ -53,3 +53,7 @@ Headline generation is a narrow task. The app constrains the input to four detai
 - Added a visible Gradio runtime selector so users can choose the tiny model instead of silently staying in mock mode.
 - Added a `generate_headlines` wrapper that chooses real model or mock fallback from the UI runtime selector.
 - Added Tiny Titan dependencies in `requirements.txt`.
+
+## Performance defaults
+
+For the first public Tiny Titan path, the app limits generation to `MAX_NEW_TOKENS=280` by default and streams in `STREAM_BATCH_SIZE=48` character batches. These values reduce cold-start perceived latency and avoid over-generating for a narrow headline task.

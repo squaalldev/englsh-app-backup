@@ -68,6 +68,14 @@ Headline Booster now behaves like a focused chatbot instead of a static generato
 - Sidebar examples are clickable chat turns that fill the conversation with real headline requests.
 - A lightweight JSON history is saved locally for the current namespace and cleared with `+ Nueva conversación`; no login, database, payments, or external API is required.
 
+## Performance defaults
+
+The app uses faster defaults for the first public Space version:
+
+- `MAX_NEW_TOKENS=280` keeps the tiny model focused on headline output instead of long generations.
+- `STREAM_BATCH_SIZE=48` reduces the number of Gradio UI updates while keeping a lightweight streaming feel.
+- Use `USE_REAL_MODEL=false` when iterating on visual design and `USE_REAL_MODEL=true` only when testing model quality.
+
 ## Tiny Titan model mode
 
 The app defaults to mock mode locally, but defaults to the tiny model on Hugging Face Spaces when Space environment variables are present. To force the Tiny Titan model path, configure:

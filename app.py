@@ -99,11 +99,11 @@ CUSTOM_CSS = (Path(__file__).parent / "frontend" / "styles.css").read_text(encod
 DATA_DIR = Path(os.getenv("HEADLINE_BOOSTER_DATA_DIR", "data"))
 CHAT_HISTORY_DIR = DATA_DIR / "chat_histories"
 CHAT_NAMESPACE = os.getenv("CHATBOT_USER_NAMESPACE", "default_user")
-STREAM_BATCH_SIZE = int(os.getenv("STREAM_BATCH_SIZE", "4"))
+STREAM_BATCH_SIZE = int(os.getenv("STREAM_BATCH_SIZE", "48"))
 
 MODEL_ID = os.getenv("MODEL_ID", "Qwen/Qwen2.5-1.5B-Instruct")
 MODEL_FALLBACK_ID = os.getenv("MODEL_FALLBACK_ID", "Qwen/Qwen2.5-3B-Instruct")
-REAL_MODEL_MAX_NEW_TOKENS = int(os.getenv("MAX_NEW_TOKENS", "700"))
+REAL_MODEL_MAX_NEW_TOKENS = int(os.getenv("MAX_NEW_TOKENS", "280"))
 TINY_TITAN_TARGET = "Qwen/Qwen2.5-1.5B-Instruct"
 MODEL_RUNTIME = "Modelo tiny (Qwen 1.5B)"
 MOCK_RUNTIME = "Mock local"
