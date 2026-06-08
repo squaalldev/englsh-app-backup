@@ -39,11 +39,11 @@ The useful visual ideas were the left sidebar, central chat area, soft brown pal
 
 ## Chatbot interaction update
 
-Codex adapted the useful behavior from the Streamlit reference without reintroducing Streamlit or external APIs: short greetings now start the four-question flow, assistant output streams into Gradio, sidebar examples submit real chat turns, and a small JSON file stores the active chat history until the user starts a new conversation.
+Codex adapted the useful behavior from the Streamlit reference without reintroducing Streamlit or external APIs: short greetings now start the four-question flow, the UI shows a working message while the model runs, example buttons and the model selector were removed, and a small JSON file stores each user/session history until that user starts a new chat.
 
 ## Current status
 
-Headline Booster is now a simple Gradio app that can run with `python app.py`. It defaults to mock mode locally, defaults to the tiny model on Hugging Face Spaces, and can switch runtime from the UI selector or with `USE_REAL_MODEL=true`. It asks for only four data points when input is incomplete and returns Spanish headline options when the request is complete.
+Headline Booster is now a simple Gradio app that can run with `python app.py`. It uses the tiny model path by default, keeps `USE_REAL_MODEL=false` as a local visual-development fallback, and no longer exposes a runtime selector in the frontend. It asks for only four data points when input is incomplete and returns Spanish headline options when the request is complete.
 
 ## Next steps
 

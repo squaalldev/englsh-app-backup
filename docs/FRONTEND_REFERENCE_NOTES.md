@@ -8,12 +8,11 @@ The visual reference is the `frontend-reference/` folder from the public GitHub 
 
 Headline Booster borrows visual ideas only:
 
-- cinematic "signal" language;
-- a darker premium sidebar;
-- pill navigation in the topbar;
-- a portal-style hero/avatar;
-- compact proof/metric cards;
-- a more polished chat chamber and composer.
+- a dark two-column layout;
+- a wider previous-chats sidebar;
+- a centered hero/logo area;
+- a minimal lower composer;
+- a cleaner app surface with the old top navigation removed.
 
 ## What was not copied
 
@@ -29,7 +28,7 @@ The Road B product logic was not copied. Headline Booster does not use:
 
 ## How it is used in this app
 
-The runtime app is still `app.py`. The visual layer lives in `frontend/styles.css` and is passed into Gradio at launch time. The `frontend-reference/` folder should remain a reference source only unless specific assets are intentionally copied into `frontend/assets/`.
+The runtime app is still `app.py`. The visual layer lives in `frontend/styles.css` and is passed into Gradio at launch time. The app now follows the dark reference layout while keeping Gradio as the only frontend runtime.
 
 ## Future adaptation path
 

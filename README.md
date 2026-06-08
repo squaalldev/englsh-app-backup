@@ -36,9 +36,9 @@ python app.py
 - Prepared for a small model under 32B parameters
 - Tiny Titan target model: Qwen/Qwen2.5-1.5B-Instruct
 - Quality fallback model: Qwen/Qwen2.5-3B-Instruct
-- Mock mode by default for local development
-- Tiny model mode by default on Hugging Face Spaces
-- Real model mode via USE_REAL_MODEL=true or UI runtime selector
+- Tiny model mode by default
+- Local visual-development fallback via USE_REAL_MODEL=false
+- No model selector in the public interface
 - ZeroGPU integration prepared
 
 ## Architecture
@@ -64,21 +64,21 @@ python app.py
 Headline Booster now behaves like a focused chatbot instead of a static generator:
 
 - Short greetings like `hola` start the conversation and ask only for the four required data points.
-- Responses stream into the chat area so the user sees the assistant writing instead of waiting for a static block.
-- Sidebar examples are clickable chat turns that fill the conversation with real headline requests.
-- A lightweight JSON history is saved locally for the current namespace and cleared with `+ Nueva conversación`; no login, database, payments, or external API is required.
+- The chat shows `La IA está trabajando...` while the model prepares the answer.
+- The frontend no longer shows example buttons or a model selector, keeping the screen focused on one chat input.
+- A lightweight JSON history is saved locally per Gradio session/user namespace and cleared with `+ Nuevo chat`; no login, database, payments, or external API is required.
 
 ## Performance defaults
 
 The app uses faster defaults for the first public Space version:
 
 - `MAX_NEW_TOKENS=280` keeps the tiny model focused on headline output instead of long generations.
-- `STREAM_BATCH_SIZE=48` reduces the number of Gradio UI updates while keeping a lightweight streaming feel.
-- Use `USE_REAL_MODEL=false` when iterating on visual design and `USE_REAL_MODEL=true` only when testing model quality.
+- The old character-by-character streaming helper was removed; the app now swaps a working message for the final answer.
+- Use `USE_REAL_MODEL=false` only when iterating on visual design locally.
 
 ## Tiny Titan model mode
 
-The app defaults to mock mode locally, but defaults to the tiny model on Hugging Face Spaces when Space environment variables are present. To force the Tiny Titan model path, configure:
+The app uses the tiny model path by default. For explicit Tiny Titan configuration, set:
 
 ```bash
 USE_REAL_MODEL=true

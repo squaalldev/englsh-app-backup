@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from functools import lru_cache, partial
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -99,7 +99,6 @@ CUSTOM_CSS = (Path(__file__).parent / "frontend" / "styles.css").read_text(encod
 DATA_DIR = Path(os.getenv("HEADLINE_BOOSTER_DATA_DIR", "data"))
 CHAT_HISTORY_DIR = DATA_DIR / "chat_histories"
 CHAT_NAMESPACE = os.getenv("CHATBOT_USER_NAMESPACE", "default_user")
-STREAM_BATCH_SIZE = int(os.getenv("STREAM_BATCH_SIZE", "48"))
 
 MODEL_ID = os.getenv("MODEL_ID", "Qwen/Qwen2.5-1.5B-Instruct")
 MODEL_FALLBACK_ID = os.getenv("MODEL_FALLBACK_ID", "Qwen/Qwen2.5-3B-Instruct")
@@ -109,19 +108,7 @@ MODEL_RUNTIME = "Modelo tiny (Qwen 1.5B)"
 MOCK_RUNTIME = "Mock local"
 AUTO_RUNTIME = os.getenv("USE_REAL_MODEL", "auto").lower()
 IS_HUGGING_FACE_SPACE = bool(os.getenv("SPACE_ID") or os.getenv("SPACE_HOST") or os.getenv("HF_SPACE_ID"))
-DEFAULT_RUNTIME = (
-    MODEL_RUNTIME
-    if AUTO_RUNTIME == "true" or (AUTO_RUNTIME == "auto" and IS_HUGGING_FACE_SPACE)
-    else MOCK_RUNTIME
-)
-RUNTIME_LABEL = "real model" if DEFAULT_RUNTIME == MODEL_RUNTIME else "mock mode"
-MODEL_BADGE = MODEL_ID.split("/")[-1] if DEFAULT_RUNTIME == MODEL_RUNTIME else "small-model ready"
-EXAMPLE_PROMPTS = {
-    "Taller de Diseño Humano": "Vendo un taller de Diseño Humano para mujeres emprendedoras que quieren tomar decisiones con más claridad. Quiero 10 encabezados.",
-    "Curso de Copywriting": "Vendo un curso de copywriting para freelancers que quieren conseguir mejores clientes y escribir mensajes que vendan sin sonar agresivos. Quiero 10 encabezados.",
-    "Web para Coaches": "Vendo diseño de páginas web para coaches que quieren verse más profesionales y convertir más visitas en llamadas de venta. Quiero 8 encabezados.",
-    "Mentoría para Emprendedoras": "Vendo una mentoría para mujeres emprendedoras que quieren ordenar su oferta, comunicar mejor su valor y vender con más seguridad. Quiero 12 encabezados.",
-}
+DEFAULT_RUNTIME = MOCK_RUNTIME if AUTO_RUNTIME == "false" else MODEL_RUNTIME
 GREETING_MESSAGE = f"""¡Perfecto! Puedo ayudarte a crear encabezados claros y persuasivos.
 
 {MISSING_INFO_MESSAGE}"""
@@ -161,6 +148,23 @@ def _extract_count(user_message: str) -> int:
 def _history_path(namespace: str = CHAT_NAMESPACE) -> Path:
     safe_namespace = re.sub(r"[^a-zA-Z0-9_.-]", "_", namespace) or "default_user"
     return CHAT_HISTORY_DIR / f"{safe_namespace}.json"
+
+
+def _request_namespace(request: gr.Request | None = None) -> str:
+    """Returns a local per-user namespace for persisted chat history."""
+    configured_namespace = os.getenv("CHATBOT_USER_NAMESPACE")
+    if configured_namespace:
+        return configured_namespace
+
+    username = getattr(request, "username", None)
+    if username:
+        return f"user_{username}"
+
+    session_hash = getattr(request, "session_hash", None)
+    if session_hash:
+        return f"user_{session_hash}"
+
+    return CHAT_NAMESPACE
 
 
 def load_chat_history(namespace: str = CHAT_NAMESPACE) -> list[dict[str, Any]]:
@@ -479,10 +483,10 @@ Para activar la interacción real con el modelo en Hugging Face Spaces:
 
 1. Asegúrate de tener hardware ZeroGPU o GPU disponible.
 2. Instala las dependencias de `requirements.txt`.
-3. Configura `USE_REAL_MODEL=true` o elige **Modelo tiny (Qwen 1.5B)** en la interfaz.
+3. Configura `USE_REAL_MODEL=true` o deja el valor por defecto para usar el modelo de IA.
 4. Si necesitas más calidad, usa `MODEL_ID={MODEL_FALLBACK_ID}`.
 
-Mientras tanto puedes cambiar el selector a **Mock local** para probar el flujo sin descargar el modelo."""
+Para desarrollo visual local puedes usar `USE_REAL_MODEL=false`, pero la interfaz pública no muestra selector de modelo."""
 
 
 def _last_complete_user_request(history: list[dict[str, Any]]) -> str:
@@ -506,204 +510,113 @@ def _resolve_bot_message(clean_message: str, history: list[dict[str, Any]], runt
     return MISSING_INFO_MESSAGE
 
 
-def _stream_assistant_message(
-    base_history: list[dict[str, Any]],
-    final_response: str,
-    clear_input: str = "",
-):
-    streamed_response = ""
-    assistant_index = len(base_history) - 1
-    batch_size = max(1, STREAM_BATCH_SIZE)
-
-    for index, character in enumerate(final_response, start=1):
-        streamed_response += character
-        if index % batch_size == 0 or index == len(final_response):
-            working_history = [*base_history]
-            working_history[assistant_index] = {"role": "assistant", "content": streamed_response + "▌"}
-            yield working_history, clear_input, gr.update(visible=False), working_history
-
-    final_history = [*base_history]
-    final_history[assistant_index] = {"role": "assistant", "content": final_response}
-    save_chat_history(final_history)
-    yield final_history, clear_input, gr.update(visible=False), final_history
+def load_session_history(request: gr.Request):
+    """Loads the current user's local chat history when the Gradio session starts."""
+    history = load_chat_history(_request_namespace(request))
+    return history, gr.update(visible=len(history) == 0), history
 
 
-def chat_response(message, history, runtime_mode):
-    """Streams the conversation response and persists the simple chat history."""
+def chat_response(message, history, request: gr.Request):
+    """
+    Handles one chatbot turn.
+    Shows a working message while the AI/model path runs, then replaces it with the final answer.
+    """
     history = history or []
-    runtime_mode = runtime_mode or DEFAULT_RUNTIME
     clean_message = (message or "").strip()
     if not clean_message:
         yield history, "", gr.update(visible=len(history) == 0), history
         return
 
     user_entry = {"role": "user", "content": clean_message}
-    assistant_entry = {"role": "assistant", "content": "Generando respuesta..."}
-    working_history = [*history, user_entry, assistant_entry]
+    working_entry = {"role": "assistant", "content": "La IA está trabajando..."}
+    working_history = [*history, user_entry, working_entry]
     yield working_history, "", gr.update(visible=False), working_history
 
-    bot_message = _resolve_bot_message(clean_message, history, runtime_mode)
-    yield from _stream_assistant_message(working_history, bot_message)
+    bot_message = _resolve_bot_message(clean_message, history, DEFAULT_RUNTIME)
+    final_history = [*history, user_entry, {"role": "assistant", "content": bot_message}]
+    save_chat_history(final_history, _request_namespace(request))
+    yield final_history, "", gr.update(visible=False), final_history
 
 
-def submit_example(example_message: str, history, runtime_mode):
-    """Runs a sidebar example as a real chat turn."""
-    yield from chat_response(example_message, history, runtime_mode)
-
-
-def reset_chat():
+def reset_chat(request: gr.Request):
     """
-    Limpia la conversación.
+    Limpia la conversación local del usuario actual.
     """
-    clear_chat_history()
+    clear_chat_history(_request_namespace(request))
     return [], "", gr.update(visible=True), []
 
 
 def build_app() -> gr.Blocks:
     with gr.Blocks(title="Headline Booster") as demo:
-        initial_history = load_chat_history()
+        initial_history: list[dict[str, Any]] = []
         chat_state = gr.State(initial_history)
-        with gr.Column(elem_id="headline-app"):
-            with gr.Row(elem_id="headline-layout"):
-                with gr.Column(elem_id="sidebar", scale=0, min_width=280):
-                    gr.HTML(
-                        """
-                        <div class="brand-mark">HB</div>
-                        <div class="brand-kicker">headline lab · gradio</div>
-                        <h1>Headline Booster</h1>
-                        <p>Encabezados claros. Copy que vende.</p>
-                        """
-                    )
-                    new_chat = gr.Button("+ Nueva conversación", elem_id="new-chat", size="lg")
-                    runtime_mode = gr.Radio(
-                        choices=[MODEL_RUNTIME, MOCK_RUNTIME],
-                        value=DEFAULT_RUNTIME,
-                        label="Runtime",
-                        elem_id="runtime-mode",
-                    )
-                    gr.HTML(
-                        f"""
-                        <div class="signal-panel">
-                          <div class="signal-label">Signal controls</div>
-                          <div class="signal-row">
-                            <span class="signal-pill">{RUNTIME_LABEL}</span>
-                            <span class="signal-pill">{MODEL_BADGE}</span>
-                          </div>
-                          <div class="signal-meter"><div class="signal-fill"></div></div>
-                        </div>
-                        <div class="sidebar-card">
-                          <div class="sidebar-title">Conversaciones de ejemplo</div>
-                        </div>
-                        """
-                    )
-                    example_human_design = gr.Button(
-                        "Taller de Diseño Humano",
-                        elem_classes="example-button",
-                    )
-                    example_copywriting = gr.Button(
-                        "Curso de Copywriting",
-                        elem_classes="example-button",
-                    )
-                    example_coaches = gr.Button(
-                        "Web para Coaches",
-                        elem_classes="example-button",
-                    )
-                    example_mentorship = gr.Button(
-                        "Mentoría para Emprendedoras",
-                        elem_classes="example-button",
-                    )
-                with gr.Column(elem_id="main-panel", scale=1):
-                    gr.HTML(
-                        """
-                        <div class="topbar">
-                          <div class="top-left">
-                            <h2>Headline Booster</h2>
-                            <div class="nav-pills">
-                              <span class="nav-pill">Generador</span>
-                              <span class="nav-pill">Ejemplos</span>
-                              <span class="nav-pill">Notas</span>
-                            </div>
-                          </div>
-                          <div class="status-wrap">
-                            <span><span class="status-dot">●</span> disponible</span>
-                            <span class="settings-icon">⚙</span>
-                          </div>
-                        </div>
-                        """
-                    )
-                    welcome = gr.HTML(
-                        f"""
-                        <section id="welcome-hero">
-                          <div class="hero-kicker">portal de encabezados · 01</div>
-                          <div class="portal-avatar" aria-label="Booster avatar"></div>
-                          <h2>Booster</h2>
-                          <h3>Crea encabezados persuasivos en segundos</h3>
-                          <p>Dime qué vendes, para quién es, qué resultado prometes y cuántos encabezados quieres. Yo te devuelvo opciones claras, memorables y listas para probar.</p>
-                          <div class="hero-actions">
-                            <span class="hero-chip">Claro</span>
-                            <span class="hero-chip">Persuasivo</span>
-                            <span class="hero-chip">Listo para usar</span>
-                          </div>
-                          <div class="metric-grid">
-                            <div class="metric-card"><strong>4 datos</strong><span>sin formularios largos</span></div>
-                            <div class="metric-card"><strong>10 ideas</strong><span>{RUNTIME_LABEL}</span></div>
-                            <div class="metric-card"><strong>1.5B target</strong><span>Tiny Titan</span></div>
-                          </div>
-                        </section>
-                        """,
-                        visible=len(initial_history) == 0,
-                    )
-                    chatbot = gr.Chatbot(
-                        value=initial_history,
-                        elem_id="chatbot",
-                        show_label=False,
-                        height=220,
-                        avatar_images=(None, None),
-                    )
-                    with gr.Column(elem_classes="composer"):
-                        with gr.Row():
-                            message = gr.Textbox(
-                                elem_id="message-input",
-                                show_label=False,
-                                lines=2,
-                                max_lines=6,
-                                placeholder="Ej. Vendo un taller de Diseño Humano para mujeres emprendedoras que quieren tomar decisiones con más claridad. Quiero 10 encabezados.",
-                                scale=8,
-                            )
-                            send = gr.Button("Enviar", elem_id="send-btn", variant="primary", scale=1)
-                        gr.HTML(f'<div class="helper-text"><span>Presiona Enter para enviar · Shift+Enter para nueva línea</span><span class="runtime-note">gradio · {RUNTIME_LABEL} · sin API externa</span></div>')
+        with gr.Row(elem_id="headline-layout"):
+            with gr.Column(elem_id="sidebar", scale=0, min_width=450):
+                gr.HTML(
+                    """
+                    <aside class="sidebar-shell">
+                      <h1>Chats Anteriores</h1>
+                      <p class="sidebar-subtitle">Headline Booster</p>
+                    </aside>
+                    """
+                )
+                new_chat = gr.Button("+ Nuevo chat", elem_id="new-chat", size="lg")
+                gr.HTML(
+                    """
+                    <div class="sessions-block">
+                      <div class="sessions-title">Sesiones</div>
+                      <div class="session-item">Sesión local</div>
+                    </div>
+                    """
+                )
 
+            with gr.Column(elem_id="main-panel", scale=1):
+                gr.HTML('<div class="app-menu" aria-hidden="true">⋮</div>')
+                welcome = gr.HTML(
+                    """
+                    <section id="welcome-hero">
+                      <div class="hero-logo" aria-label="Headline Booster logo">
+                        <div class="hero-icon">✍️</div>
+                        <div class="hero-wordmark">HEADLINE BOOSTER</div>
+                      </div>
+                      <h2>Headline Booster</h2>
+                      <p class="byline">By Jesús Cabrera</p>
+                      <p class="tagline">✉️ Experto en encabezados claros que conectan ofertas con ventas de forma natural</p>
+                    </section>
+                    """,
+                    visible=True,
+                )
+                chatbot = gr.Chatbot(
+                    value=initial_history,
+                    elem_id="chatbot",
+                    show_label=False,
+                    height=290,
+                    avatar_images=(None, None),
+                )
+                with gr.Column(elem_classes="composer"):
+                    with gr.Row(elem_classes="composer-row"):
+                        message = gr.Textbox(
+                            elem_id="message-input",
+                            show_label=False,
+                            lines=1,
+                            max_lines=4,
+                            placeholder="Escribe aquí tus instrucciones",
+                            scale=10,
+                        )
+                        send = gr.Button("↑", elem_id="send-btn", variant="primary", scale=1)
+
+        demo.load(load_session_history, outputs=[chatbot, welcome, chat_state])
         message.submit(
             chat_response,
-            inputs=[message, chat_state, runtime_mode],
+            inputs=[message, chat_state],
             outputs=[chatbot, message, welcome, chat_state],
         )
         send.click(
             chat_response,
-            inputs=[message, chat_state, runtime_mode],
+            inputs=[message, chat_state],
             outputs=[chatbot, message, welcome, chat_state],
         )
         new_chat.click(reset_chat, outputs=[chatbot, message, welcome, chat_state])
-        example_human_design.click(
-            partial(submit_example, EXAMPLE_PROMPTS["Taller de Diseño Humano"]),
-            inputs=[chat_state, runtime_mode],
-            outputs=[chatbot, message, welcome, chat_state],
-        )
-        example_copywriting.click(
-            partial(submit_example, EXAMPLE_PROMPTS["Curso de Copywriting"]),
-            inputs=[chat_state, runtime_mode],
-            outputs=[chatbot, message, welcome, chat_state],
-        )
-        example_coaches.click(
-            partial(submit_example, EXAMPLE_PROMPTS["Web para Coaches"]),
-            inputs=[chat_state, runtime_mode],
-            outputs=[chatbot, message, welcome, chat_state],
-        )
-        example_mentorship.click(
-            partial(submit_example, EXAMPLE_PROMPTS["Mentoría para Emprendedoras"]),
-            inputs=[chat_state, runtime_mode],
-            outputs=[chatbot, message, welcome, chat_state],
-        )
 
     return demo
 

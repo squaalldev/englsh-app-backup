@@ -50,10 +50,10 @@ Headline generation is a narrow task. The app constrains the input to four detai
 - Added model runtime configuration in `app.py`.
 - Added `build_headline_prompt` for constrained Spanish generation.
 - Added cached Hugging Face model loading.
-- Added a visible Gradio runtime selector so users can choose the tiny model instead of silently staying in mock mode.
-- Added a `generate_headlines` wrapper that chooses real model or mock fallback from the UI runtime selector.
+- Removed the visible runtime selector so the public interface always behaves like an AI-model chat.
+- Kept a `generate_headlines` wrapper so local development can still use `USE_REAL_MODEL=false` without exposing that choice in the UI.
 - Added Tiny Titan dependencies in `requirements.txt`.
 
 ## Performance defaults
 
-For the first public Tiny Titan path, the app limits generation to `MAX_NEW_TOKENS=280` by default and streams in `STREAM_BATCH_SIZE=48` character batches. These values reduce cold-start perceived latency and avoid over-generating for a narrow headline task.
+For the first public Tiny Titan path, the app limits generation to `MAX_NEW_TOKENS=280` by default and removed character-by-character response streaming. The UI now shows a working message while the model runs, then swaps in the final answer.
