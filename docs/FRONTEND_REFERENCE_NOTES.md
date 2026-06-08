@@ -34,4 +34,4 @@ The visual layer now lives entirely in `index.html`. The file contains the marku
 
 ## Responsive strategy
 
-The layout uses a two-column desktop grid and collapses to a single-column mobile layout. The sidebar becomes a top history panel on smaller screens, the hero scales down, and the composer remains easy to reach at the bottom.
+The layout now follows a compact app-shell pattern: a fixed 320px desktop sidebar, a scrollable message column, bubble-style user/assistant messages, a fixed composer offset by the sidebar, and mobile rules that hide the sidebar and keep the composer full-width. This avoids the oversized spacing from the earlier full-page hero implementation.

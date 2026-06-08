@@ -5,679 +5,192 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Headline Booster AI</title>
   <style>
-    :root {
-      --bg: #f6f7fb;
-      --sidebar: #ffffff;
-      --ink: #091831;
-      --muted: #667085;
-      --line: #e7e9ef;
-      --brown: #9b6a53;
-      --brown-dark: #7f553f;
-      --soft-brown: #f4ece7;
-      --card: #ffffff;
-      --shadow: 0 22px 70px rgba(16, 24, 40, 0.08);
-      --radius: 28px;
+    :root{
+      --bg:#f7f8fb;
+      --panel:#ffffff;
+      --sidebar:#ffffff;
+      --line:#e7e9ee;
+      --line-strong:#d9dde6;
+      --text:#172033;
+      --muted:#697386;
+      --soft:#f1f3f7;
+      --accent:#a8755e;
+      --accent-dark:#875741;
+      --accent-soft:#f4ebe6;
+      --danger:#e25555;
+      --shadow:0 16px 46px rgba(25,35,60,.08);
+      --radius:24px;
     }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+    body{overflow:hidden}
+    button,input,textarea{font:inherit}
+    button{cursor:pointer}
+    .app{display:grid;grid-template-columns:320px minmax(0,1fr);min-height:100vh;background:var(--bg)}
+    .sidebar{background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:100vh;box-shadow:6px 0 26px rgba(25,35,60,.04);z-index:2}
+    .side-head{padding:22px 18px 18px;border-bottom:1px solid var(--line)}
+    .brand{font-weight:900;font-size:23px;letter-spacing:-.04em;display:flex;align-items:baseline;gap:5px}.brand span{color:var(--accent)}
+    .new-btn{width:100%;margin-top:18px;border:0;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:white;font-weight:800;padding:15px 18px;cursor:pointer;box-shadow:0 10px 22px rgba(168,117,94,.22);transition:.18s}
+    .new-btn:hover{transform:translateY(-1px)}
+    .history{flex:1;overflow:auto}.history-title{padding:16px 18px 6px;color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+    .session{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:17px 16px;border-bottom:1px solid var(--line);cursor:pointer;background:white}.session:hover{background:#fbfbfd}.session.active{background:var(--accent-soft)}
+    .session-name{font-size:15px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px}.session-date{font-size:13px;color:var(--muted);margin-top:4px}.trash{border:0;background:transparent;color:#9aa2af;font-size:18px;cursor:pointer;padding:5px}.trash:hover{color:var(--danger)}
+    .empty-history{padding:0 18px;color:#9aa2af;font-size:14px;line-height:1.45}
 
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--ink);
-      background: var(--bg);
-      overflow: hidden;
-    }
-
-    button, textarea { font: inherit; }
-    button { cursor: pointer; }
-
-    .app-shell {
-      min-height: 100dvh;
-      display: grid;
-      grid-template-columns: minmax(270px, 426px) minmax(0, 1fr);
-      background: var(--bg);
-    }
-
-    .sidebar {
-      background: var(--sidebar);
-      border-right: 1px solid var(--line);
-      display: flex;
-      flex-direction: column;
-      min-height: 100dvh;
-      box-shadow: 18px 0 55px rgba(16, 24, 40, 0.04);
-      z-index: 2;
-    }
-
-    .brand-block {
-      padding: clamp(24px, 4vw, 46px) 20px 24px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .brand {
-      margin: 0 0 26px;
-      font-size: clamp(1.65rem, 2.1vw, 2rem);
-      line-height: 1.08;
-      letter-spacing: -0.055em;
-      font-weight: 900;
-    }
-
-    .brand span { color: var(--brown); }
-
-    .new-button {
-      width: 100%;
-      min-height: 68px;
-      border: 0;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #ae7a62, var(--brown-dark));
-      color: white;
-      font-weight: 850;
-      font-size: 1.08rem;
-      box-shadow: 0 16px 28px rgba(127, 85, 63, 0.22);
-      transition: transform .18s ease, box-shadow .18s ease;
-    }
-
-    .new-button:hover { transform: translateY(-1px); box-shadow: 0 20px 34px rgba(127, 85, 63, 0.27); }
-
-    .history-area {
-      padding: 24px 20px;
-      overflow: auto;
-    }
-
-    .section-label {
-      margin: 0 0 18px;
-      color: #697386;
-      font-size: .82rem;
-      font-weight: 900;
-      letter-spacing: .16em;
-    }
-
-    .history-empty {
-      color: #98a2b3;
-      font-size: .95rem;
-      line-height: 1.45;
-    }
-
-    .history-list { display: grid; gap: 10px; }
-
-    .history-item {
-      width: 100%;
-      border: 1px solid transparent;
-      background: #fbfbfd;
-      border-radius: 16px;
-      padding: 12px 12px 12px 14px;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 8px;
-      text-align: left;
-      color: var(--ink);
-    }
-
-    .history-item.active {
-      border-color: rgba(155, 106, 83, .35);
-      background: var(--soft-brown);
-    }
-
-    .history-title {
-      font-size: .95rem;
-      font-weight: 750;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .history-date {
-      display: block;
-      margin-top: 4px;
-      color: #8a94a6;
-      font-size: .78rem;
-      font-weight: 550;
-    }
-
-    .delete-session {
-      border: 0;
-      background: transparent;
-      color: #9aa3b2;
-      border-radius: 10px;
-      width: 34px;
-      height: 34px;
-      font-size: 1.05rem;
-    }
-
-    .delete-session:hover { background: rgba(127, 85, 63, .1); color: var(--brown-dark); }
-
-    .main {
-      min-width: 0;
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      background:
-        radial-gradient(circle at 50% 20%, rgba(255,255,255,.95), rgba(246,247,251,.4) 38%, transparent 70%),
-        var(--bg);
-    }
-
-    .content-scroll {
-      flex: 1;
-      overflow: auto;
-      padding: clamp(42px, 7vw, 118px) clamp(22px, 5vw, 80px) 26px;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(155, 106, 83, .38) transparent;
-    }
-
-    .content-scroll::-webkit-scrollbar,
-    .history-area::-webkit-scrollbar { width: 10px; }
-    .content-scroll::-webkit-scrollbar-track,
-    .history-area::-webkit-scrollbar-track { background: transparent; }
-    .content-scroll::-webkit-scrollbar-thumb,
-    .history-area::-webkit-scrollbar-thumb {
-      background: rgba(155, 106, 83, .32);
-      border-radius: 999px;
-      border: 3px solid transparent;
-      background-clip: content-box;
-    }
-
-    .hero {
-      max-width: 820px;
-      margin: 0 auto;
-      min-height: min(520px, 62dvh);
-      display: grid;
-      place-items: center;
-      text-align: center;
-    }
-
-    .hero-inner { transform: translateY(-8px); }
-
-    .avatar {
-      width: clamp(148px, 13vw, 238px);
-      aspect-ratio: 1;
-      margin: 0 auto 42px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: #9f7059;
-      box-shadow: 0 30px 90px rgba(82, 60, 48, .22);
-    }
-
-    .avatar-face {
-      width: 50%;
-      aspect-ratio: 1;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      font-size: clamp(2.8rem, 5vw, 4.8rem);
-      background: linear-gradient(135deg, #ffd34f, #ff736e 82%);
-      box-shadow: inset 0 -12px 20px rgba(135, 64, 55, .16);
-    }
-
-    .hero h1 {
-      margin: 0;
-      font-size: clamp(2.05rem, 3vw, 3rem);
-      letter-spacing: -0.055em;
-      line-height: 1.03;
-      font-weight: 900;
-    }
-
-    .hero p {
-      max-width: 660px;
-      margin: 24px auto 0;
-      color: var(--muted);
-      font-size: clamp(1.05rem, 1.4vw, 1.32rem);
-      line-height: 1.55;
-    }
-
-    .results {
-      max-width: 980px;
-      margin: 0 auto;
-      display: grid;
-      gap: 18px;
-      animation: rise .24s ease-out;
-    }
-
-    @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-
-    .original-card {
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.72);
-      border-radius: 22px;
-      padding: 18px 20px;
-      color: #536072;
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      padding: clamp(18px, 2.2vw, 28px);
-      box-shadow: 0 12px 40px rgba(16,24,40,.055);
-    }
-
-    .card h2, .card h3 {
-      margin: 0 0 14px;
-      letter-spacing: -0.035em;
-      line-height: 1.1;
-    }
-
-    .score-grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .score {
-      border-radius: 18px;
-      background: #f8f4f1;
-      padding: 16px;
-      border: 1px solid rgba(155,106,83,.12);
-    }
-
-    .score b { display: block; font-size: 1.6rem; letter-spacing: -.05em; color: var(--brown-dark); }
-    .score span { color: #6b7280; font-size: .86rem; font-weight: 750; }
-
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-    .card p, .card li { color: #4d596a; line-height: 1.62; }
-    .card ul { margin: 0; padding-left: 1.15rem; }
-
-    .versions { display: grid; gap: 12px; }
-    .version {
-      border: 1px solid #e6e8ee;
-      border-radius: 18px;
-      padding: 16px 18px;
-      display: grid;
-      gap: 8px;
-      background: #fbfcfe;
-    }
-    .version.winner { border-color: rgba(155,106,83,.42); background: linear-gradient(180deg, #fff, #fbf4f0); }
-    .version-label { color: var(--brown-dark); font-weight: 900; font-size: .86rem; letter-spacing: .04em; text-transform: uppercase; }
-    .version-text { font-size: 1.04rem; line-height: 1.5; }
-
-    .battle-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .battle-item {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 14px;
-      background: #fbfbfd;
-      color: #536072;
-    }
-    .battle-item b { color: var(--ink); }
-
-    .winner-card {
-      background: linear-gradient(135deg, var(--brown), var(--brown-dark));
-      color: white;
-      border: 0;
-    }
-    .winner-card p { color: rgba(255,255,255,.88); }
-    .winner-title { font-size: clamp(1.25rem, 2vw, 1.65rem); line-height: 1.35; font-weight: 850; }
-
-    .composer-wrap {
-      border-top: 1px solid rgba(225, 229, 236, .75);
-      background: rgba(246, 247, 251, .92);
-      backdrop-filter: blur(18px);
-      padding: 26px clamp(20px, 4vw, 70px) 14px;
-    }
-
-    .composer {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 94px;
-      gap: 16px;
-      align-items: stretch;
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 96px;
-      max-height: 190px;
-      resize: none;
-      border: 0;
-      outline: none;
-      border-radius: 34px;
-      background: #eef0f5;
-      padding: 28px 30px;
-      color: var(--ink);
-      font-size: clamp(1rem, 1.45vw, 1.22rem);
-      line-height: 1.42;
-      box-shadow: inset 0 0 0 1px rgba(16,24,40,.025);
-    }
-
-    textarea::placeholder { color: #757f90; }
-
-    .send-button {
-      border: 0;
-      border-radius: 28px;
-      min-height: 96px;
-      background: #c9cfd9;
-      color: #3d4655;
-      font-size: 2rem;
-      transition: transform .18s ease, background .18s ease, color .18s ease;
-    }
-    .send-button:hover:not(:disabled) { transform: translateY(-1px); background: var(--brown); color: white; }
-    .send-button:disabled { opacity: .65; cursor: wait; }
-
-    .hint {
-      max-width: 1400px;
-      margin: 16px auto 0;
-      text-align: center;
-      color: #98a2b3;
-      font-size: .92rem;
-    }
-
-    .loading {
-      max-width: 720px;
-      margin: 0 auto;
-      border-radius: 24px;
-      padding: 22px 24px;
-      background: white;
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow);
-      color: #5c6677;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-    .pulse {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--brown);
-      box-shadow: 0 0 0 0 rgba(155,106,83,.45);
-      animation: pulse 1.2s infinite;
-    }
-    @keyframes pulse { 70% { box-shadow: 0 0 0 12px rgba(155,106,83,0); } 100% { box-shadow: 0 0 0 0 rgba(155,106,83,0); } }
-
-    .error-card {
-      max-width: 720px;
-      margin: 0 auto;
-      background: #fff4f4;
-      border: 1px solid #ffd6d6;
-      color: #8a2424;
-      border-radius: 22px;
-      padding: 18px 20px;
-    }
-
-    @media (max-width: 900px) {
-      body { overflow: auto; }
-      .app-shell { grid-template-columns: 1fr; }
-      .sidebar { min-height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
-      .brand-block { padding: 22px 18px; }
-      .brand { margin-bottom: 16px; }
-      .new-button { min-height: 56px; }
-      .history-area { padding: 16px 18px; max-height: 210px; }
-      .main { min-height: calc(100dvh - 210px); }
-      .content-scroll { overflow: visible; padding: 34px 18px 18px; }
-      .hero { min-height: 380px; }
-      .avatar { margin-bottom: 26px; }
-      .score-grid, .two-col, .battle-grid { grid-template-columns: 1fr; }
-      .composer-wrap { position: sticky; bottom: 0; padding: 18px 14px 12px; }
-      .composer { grid-template-columns: minmax(0, 1fr) 62px; gap: 10px; }
-      textarea { min-height: 70px; border-radius: 22px; padding: 20px; }
-      .send-button { min-height: 70px; border-radius: 22px; font-size: 1.5rem; }
-      .hint { font-size: .78rem; }
-    }
-
-    @media (max-width: 520px) {
-      .brand { font-size: 1.45rem; }
-      .history-item { padding: 10px; }
-      .hero p { font-size: 1rem; }
-      .card { border-radius: 20px; }
-      .composer-wrap { padding-left: 10px; padding-right: 10px; }
-      .composer { grid-template-columns: minmax(0, 1fr) 56px; }
-      textarea { font-size: 1rem; }
-    }
+    .main{display:flex;flex-direction:column;min-width:0;min-height:100vh}.content{flex:1;display:flex;flex-direction:column;min-height:0}.messages{flex:1;overflow:auto;padding:26px 28px 120px;display:flex;flex-direction:column;gap:18px}.welcome{margin:auto;text-align:center;max-width:640px;padding:40px 20px}.avatar{width:176px;height:176px;border-radius:50%;background:linear-gradient(135deg,#b4846d,#744a38);display:grid;place-items:center;margin:0 auto 32px;box-shadow:var(--shadow)}.avatar-inner{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#ffd33d,#ff7d5e 70%,#d66bf0);display:grid;place-items:center;font-size:48px}.welcome h1{margin:0;font-size:32px;letter-spacing:-.04em}.welcome p{font-size:18px;color:var(--muted);line-height:1.55;margin:12px auto 0}
+    .msg{max-width:min(860px,94%);display:flex;flex-direction:column;gap:8px}.msg.user{align-self:flex-end}.msg.assistant{align-self:flex-start;width:min(860px,94%)}.bubble{border-radius:20px;padding:16px 18px;line-height:1.55;white-space:pre-wrap}.user .bubble{background:var(--accent);color:white;border-bottom-right-radius:6px}.assistant .bubble{background:white;border:1px solid var(--line);box-shadow:0 10px 28px rgba(25,35,60,.05);border-bottom-left-radius:6px}.meta{font-size:12px;color:var(--muted);padding:0 5px}.user .meta{text-align:right}
+    .cards{display:grid;gap:14px}.card{background:white;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 10px 28px rgba(25,35,60,.05)}.card h3{margin:0 0 12px;font-size:18px;letter-spacing:-.02em}.card p{line-height:1.55;color:#3d4655}.score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.score{background:var(--soft);border:1px solid var(--line);border-radius:13px;padding:12px}.score b{display:block;font-size:22px;margin-bottom:3px}.score small{font-size:12px;color:var(--muted)}.score span{font-size:12px;color:var(--muted);font-weight:800;text-transform:uppercase}.missing{margin:0;padding-left:20px;color:#3d4655;line-height:1.55}.versions{display:grid;gap:10px}.version{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start;background:#fbfbfd;border:1px solid var(--line);border-radius:14px;padding:12px;line-height:1.48}.num{width:34px;height:34px;border-radius:50%;background:var(--accent-soft);color:var(--accent-dark);display:grid;place-items:center;font-weight:900}.winner{background:linear-gradient(135deg,var(--accent-soft),#fff);border-color:#dfc2b4}.battle{display:flex;gap:8px;flex-wrap:wrap}.battle span{background:var(--soft);border:1px solid var(--line);border-radius:99px;padding:7px 10px;color:var(--muted);font-weight:750;font-size:13px}
+    .composer-wrap{position:fixed;left:320px;right:0;bottom:0;background:linear-gradient(180deg,rgba(247,248,251,0),rgba(247,248,251,.98) 26%,rgba(247,248,251,1));padding:32px 28px 20px;border-top:1px solid rgba(231,233,238,.8)}.composer{max-width:1060px;margin:0 auto;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}.input-box{background:#f0f1f4;border:1px solid transparent;border-radius:28px;padding:14px 18px;display:block}.input-box:focus-within{background:white;border-color:var(--line-strong);box-shadow:0 0 0 4px rgba(168,117,94,.08)}textarea{width:100%;border:0;background:transparent;outline:none;resize:none;min-height:58px;max-height:140px;font-size:16px;color:var(--text);line-height:1.45}.send{width:70px;height:70px;border:0;border-radius:22px;background:#cbd1db;color:#596273;font-size:32px;cursor:pointer;transition:.18s}.send.ready{background:var(--accent);color:white}.send.ready:hover{transform:translateY(-1px)}.hint{text-align:center;color:#9aa2af;font-size:13px;margin-top:12px}.error{color:var(--danger)}
+    .loading{display:inline-flex;gap:6px;align-items:center}.loading i{width:7px;height:7px;border-radius:50%;background:var(--accent);display:block;animation:bounce 1s infinite}.loading i:nth-child(2){animation-delay:.12s}.loading i:nth-child(3){animation-delay:.24s}@keyframes bounce{0%,80%,100%{transform:scale(.6);opacity:.45}40%{transform:scale(1);opacity:1}}
+    .messages::-webkit-scrollbar,.history::-webkit-scrollbar{width:8px}.messages::-webkit-scrollbar-track,.history::-webkit-scrollbar-track{background:transparent}.messages::-webkit-scrollbar-thumb,.history::-webkit-scrollbar-thumb{background:rgba(168,117,94,.28);border-radius:99px}.messages{scrollbar-width:thin;scrollbar-color:rgba(168,117,94,.32) transparent}.history{scrollbar-width:thin;scrollbar-color:rgba(168,117,94,.25) transparent}
+    @media(max-width:850px){body{overflow:auto}.app{grid-template-columns:1fr;min-height:100dvh}.sidebar{display:none}.composer-wrap{left:0}.messages{padding:20px 16px 128px;min-height:100dvh}.score-grid{grid-template-columns:repeat(2,1fr)}.composer{grid-template-columns:1fr 58px}.send{width:58px;height:58px;border-radius:18px}.avatar{width:140px;height:140px}.avatar-inner{width:74px;height:74px;font-size:40px}.welcome{padding:28px 16px}.welcome h1{font-size:28px}.welcome p{font-size:16px}.msg,.msg.assistant{max-width:100%;width:100%}}
   </style>
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar" aria-label="Historial local">
-      <div class="brand-block">
-        <h1 class="brand">Headline Booster <span>AI</span></h1>
-        <button id="newButton" class="new-button" type="button">+ Nuevo titular</button>
+<div class="app">
+  <aside class="sidebar">
+    <div class="side-head">
+      <div class="brand">Headline Booster <span>AI</span></div>
+      <button class="new-btn" id="newBtn">+ Nuevo titular</button>
+    </div>
+    <div class="history" id="history"><div class="history-title">Historial local</div></div>
+  </aside>
+
+  <main class="main">
+    <section class="content">
+      <div class="messages" id="messages">
+        <div class="welcome" id="welcome">
+          <div class="avatar"><div class="avatar-inner">😊</div></div>
+          <h1>Headline Coach</h1>
+          <p>Pega un titular débil. El modelo pequeño lo diagnostica, crea 3 versiones mejores y elige el ganador.</p>
+        </div>
       </div>
-      <div class="history-area">
-        <p class="section-label">HISTORIAL LOCAL</p>
-        <div id="historyList" class="history-list"></div>
-      </div>
-    </aside>
+    </section>
 
-    <main class="main">
-      <section id="content" class="content-scroll" aria-live="polite"></section>
-      <section class="composer-wrap" aria-label="Enviar titular">
-        <form id="headlineForm" class="composer">
-          <textarea id="headlineInput" rows="1" placeholder="Pega tu titular actual... Ej. Aprende Diseño Humano" required></textarea>
-          <button id="sendButton" class="send-button" type="submit" aria-label="Enviar">→</button>
-        </form>
-        <p class="hint">Presiona Enter para enviar · Shift+Enter para nueva línea · El historial se guarda solo en este navegador</p>
-      </section>
-    </main>
-  </div>
-
-  <script>
-    const STORAGE_KEY = 'headline_booster_ai_sessions_v1';
-    const content = document.getElementById('content');
-    const historyList = document.getElementById('historyList');
-    const form = document.getElementById('headlineForm');
-    const input = document.getElementById('headlineInput');
-    const sendButton = document.getElementById('sendButton');
-    const newButton = document.getElementById('newButton');
-
-    let sessions = loadSessions();
-    let activeId = null;
-
-    function loadSessions() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      } catch (_) {
-        return [];
-      }
-    }
-
-    function saveSessions() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions.slice(0, 30)));
-    }
-
-    function escapeHtml(value) {
-      return String(value || '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
-    }
-
-    function sessionTitle(text) {
-      const clean = String(text || '').trim();
-      return clean.length > 48 ? clean.slice(0, 48) + '…' : clean || 'Titular sin nombre';
-    }
-
-    function formatDate(iso) {
-      try {
-        return new Intl.DateTimeFormat('es', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
-      } catch (_) {
-        return '';
-      }
-    }
-
-    function renderHistory() {
-      if (!sessions.length) {
-        historyList.innerHTML = '<p class="history-empty">Tus titulares optimizados aparecerán aquí solo en este navegador.</p>';
-        return;
-      }
-      historyList.innerHTML = sessions.map(session => `
-        <div class="history-item ${session.id === activeId ? 'active' : ''}" data-id="${session.id}">
-          <button type="button" class="history-open" data-id="${session.id}" style="all:unset; min-width:0; cursor:pointer;">
-            <span class="history-title">${escapeHtml(sessionTitle(session.headline))}</span>
-            <span class="history-date">${escapeHtml(formatDate(session.createdAt))}</span>
-          </button>
-          <button type="button" class="delete-session" data-delete="${session.id}" aria-label="Borrar sesión">×</button>
+    <div class="composer-wrap">
+      <form class="composer" id="form">
+        <div class="input-box">
+          <textarea id="headline" placeholder="Pega tu titular actual... Ej. Aprende Diseño Humano"></textarea>
         </div>
-      `).join('');
+        <button class="send" id="sendBtn" type="submit">→</button>
+      </form>
+      <div class="hint">Presiona Enter para enviar · Shift+Enter para nueva línea · El historial se guarda solo en este navegador</div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const messages = document.getElementById('messages');
+  const welcome = document.getElementById('welcome');
+  const form = document.getElementById('form');
+  const headlineInput = document.getElementById('headline');
+  const sendBtn = document.getElementById('sendBtn');
+  const newBtn = document.getElementById('newBtn');
+  const historyEl = document.getElementById('history');
+  const STORAGE_KEY = 'headline_booster_sessions_v2';
+  let sessions = loadSessions();
+  let currentId = null;
+
+  function loadSessions(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch{return []}}
+  function saveSessions(){localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions.slice(0,30))); renderHistory();}
+  function today(){return new Date().toLocaleDateString('es-MX',{year:'numeric',month:'numeric',day:'numeric'});}
+  function escapeHtml(s){return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+  function scrollDown(){messages.scrollTop = messages.scrollHeight;}
+  function setReady(){sendBtn.classList.toggle('ready', headlineInput.value.trim().length>2);}
+  headlineInput.addEventListener('input', setReady);
+
+  function renderHistory(){
+    historyEl.innerHTML = '<div class="history-title">Historial local</div>';
+    if(!sessions.length){
+      historyEl.insertAdjacentHTML('beforeend','<p class="empty-history">Tus titulares optimizados aparecerán aquí.</p>');
+      return;
     }
-
-    function renderHero() {
-      activeId = null;
-      content.innerHTML = `
-        <div class="hero">
-          <div class="hero-inner">
-            <div class="avatar"><div class="avatar-face">😊</div></div>
-            <h1>Headline Coach</h1>
-            <p>Pega un titular débil. El modelo pequeño lo diagnostica, crea 3 versiones mejores y elige el ganador.</p>
-          </div>
-        </div>
-      `;
-      renderHistory();
-    }
-
-    function renderLoading(headline) {
-      content.innerHTML = `
-        <div class="loading">
-          <span class="pulse"></span>
-          <div><strong>Analizando titular...</strong><br>${escapeHtml(headline)}</div>
-        </div>
-      `;
-    }
-
-    function renderError(message) {
-      content.innerHTML = `<div class="error-card"><strong>No pude procesar el titular.</strong><br>${escapeHtml(message)}</div>`;
-    }
-
-    function renderResult(data) {
-      const scores = data.diagnostico || {};
-      const versions = data.versiones || [];
-      const missing = data.falta || [];
-      const battle = data.mini_battle || { mas_claro: 1, mas_emocional: 2, mas_curioso: 3 };
-      content.innerHTML = `
-        <div class="results">
-          <div class="original-card"><strong>Titular original:</strong> ${escapeHtml(data.titular_original)}</div>
-
-          <section class="card">
-            <h2>Diagnóstico del titular</h2>
-            <div class="score-grid">
-              <div class="score"><b>${Number(scores.claridad ?? 0)}/100</b><span>Claridad</span></div>
-              <div class="score"><b>${Number(scores.deseo ?? 0)}/100</b><span>Deseo</span></div>
-              <div class="score"><b>${Number(scores.especificidad ?? 0)}/100</b><span>Especificidad</span></div>
-              <div class="score"><b>${Number(scores.diferenciacion ?? 0)}/100</b><span>Diferenciación</span></div>
-            </div>
-          </section>
-
-          <div class="two-col">
-            <section class="card">
-              <h3>Problema principal</h3>
-              <p>${escapeHtml(data.problema_principal)}</p>
-            </section>
-            <section class="card">
-              <h3>Qué le falta</h3>
-              <ul>${missing.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
-            </section>
-          </div>
-
-          <section class="card">
-            <h2>Versiones mejoradas</h2>
-            <div class="versions">
-              ${versions.map((version, index) => `
-                <div class="version ${data.ganador_numero === index + 1 ? 'winner' : ''}">
-                  <span class="version-label">#${index + 1}${data.ganador_numero === index + 1 ? ' · Ganador' : ''}</span>
-                  <div class="version-text">${escapeHtml(version)}</div>
-                </div>
-              `).join('')}
-            </div>
-          </section>
-
-          <section class="card">
-            <h2>Mini Battle</h2>
-            <div class="battle-grid">
-              <div class="battle-item">Más claro: <b>#${Number(battle.mas_claro || 1)}</b></div>
-              <div class="battle-item">Más emocional: <b>#${Number(battle.mas_emocional || 2)}</b></div>
-              <div class="battle-item">Más curioso: <b>#${Number(battle.mas_curioso || 3)}</b></div>
-            </div>
-          </section>
-
-          <section class="card winner-card">
-            <h2>Ganador</h2>
-            <div class="winner-title">#${Number(data.ganador_numero || 1)} — ${escapeHtml(data.ganador)}</div>
-            <p><strong>Por qué gana:</strong> ${escapeHtml(data.por_que_gana)}</p>
-          </section>
-        </div>
-      `;
-    }
-
-    function upsertSession(headline, result) {
-      const session = {
-        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-        headline,
-        result,
-        createdAt: new Date().toISOString()
-      };
-      sessions = [session, ...sessions.filter(item => item.headline !== headline)].slice(0, 30);
-      activeId = session.id;
-      saveSessions();
-      renderHistory();
-    }
-
-    async function submitHeadline(headline) {
-      renderLoading(headline);
-      sendButton.disabled = true;
-      try {
-        const response = await fetch('/api/improve_headline', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ headline })
-        });
-        const data = await response.json();
-        if (!response.ok || !data.ok) {
-          throw new Error(data.detail || 'Respuesta inválida del servidor');
-        }
-        renderResult(data);
-        upsertSession(headline, data);
-      } catch (error) {
-        renderError(error.message || 'Error desconocido');
-      } finally {
-        sendButton.disabled = false;
-      }
-    }
-
-    form.addEventListener('submit', event => {
-      event.preventDefault();
-      const headline = input.value.trim();
-      if (!headline) return;
-      input.value = '';
-      submitHeadline(headline);
+    sessions.forEach(s=>{
+      const item = document.createElement('div');
+      item.className = 'session' + (s.id===currentId?' active':'');
+      item.innerHTML = `<div><div class="session-name">${escapeHtml(s.title)}</div><div class="session-date">${escapeHtml(s.date)}</div></div><button class="trash" title="Borrar">⌫</button>`;
+      item.addEventListener('click',()=>loadSession(s.id));
+      item.querySelector('.trash').addEventListener('click',(e)=>{e.stopPropagation(); sessions=sessions.filter(x=>x.id!==s.id); if(currentId===s.id){newSession()} saveSessions();});
+      historyEl.appendChild(item);
     });
+  }
 
-    input.addEventListener('keydown', event => {
-      if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault();
-        form.requestSubmit();
-      }
-    });
+  function newSession(){
+    currentId = null;
+    messages.innerHTML = '';
+    messages.appendChild(welcome);
+    welcome.style.display = 'block';
+    headlineInput.value=''; setReady(); renderHistory();
+  }
 
-    newButton.addEventListener('click', () => {
-      input.value = '';
-      renderHero();
-      input.focus();
-    });
+  function loadSession(id){
+    const s = sessions.find(x=>x.id===id); if(!s) return;
+    currentId=id; messages.innerHTML=''; welcome.style.display='none';
+    addUserMessage(s.headline, false);
+    addResultCards(s.result, false);
+    renderHistory(); scrollDown();
+  }
 
-    historyList.addEventListener('click', event => {
-      const deleteId = event.target.getAttribute('data-delete');
-      if (deleteId) {
-        sessions = sessions.filter(session => session.id !== deleteId);
-        if (activeId === deleteId) renderHero();
-        saveSessions();
-        renderHistory();
-        return;
-      }
-      const openButton = event.target.closest('.history-open');
-      if (openButton) {
-        const session = sessions.find(item => item.id === openButton.dataset.id);
-        if (session) {
-          activeId = session.id;
-          renderResult(session.result);
-          renderHistory();
-        }
-      }
-    });
+  function addUserMessage(headline, animate=true){
+    welcome.style.display='none';
+    const div=document.createElement('div'); div.className='msg user';
+    div.innerHTML=`<div class="meta">Titular original</div><div class="bubble">${escapeHtml(headline)}</div>`;
+    messages.appendChild(div); if(animate) scrollDown();
+  }
 
-    renderHero();
-  </script>
+  function addLoading(){
+    const div=document.createElement('div'); div.className='msg assistant'; div.id='loadingMsg';
+    div.innerHTML='<div class="bubble"><span class="loading"><i></i><i></i><i></i></span> Analizando titular...</div>';
+    messages.appendChild(div); scrollDown(); return div;
+  }
+
+  function addResultCards(data, animate=true){
+    const d=data.diagnostico||{};
+    const versiones=data.versiones||[];
+    const div=document.createElement('div'); div.className='msg assistant';
+    div.innerHTML=`<div class="cards">
+      <div class="card"><h3>Diagnóstico del titular</h3><div class="score-grid">
+        <div class="score"><b>${d.claridad ?? '-'}<small>/100</small></b><span>Claridad</span></div>
+        <div class="score"><b>${d.deseo ?? '-'}<small>/100</small></b><span>Deseo</span></div>
+        <div class="score"><b>${d.especificidad ?? '-'}<small>/100</small></b><span>Especificidad</span></div>
+        <div class="score"><b>${d.diferenciacion ?? '-'}<small>/100</small></b><span>Diferenciación</span></div>
+      </div></div>
+      <div class="card"><h3>Problema principal</h3><p>${escapeHtml(data.problema_principal||'')}</p><h3>Qué le falta</h3><ul class="missing">${(data.falta||[]).map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul></div>
+      <div class="card"><h3>Versiones mejoradas</h3><div class="versions">${versiones.map((v,i)=>`<div class="version ${data.ganador_numero===i+1?'winner':''}"><div class="num">${i+1}</div><div>${escapeHtml(v)}</div></div>`).join('')}</div></div>
+      <div class="card"><h3>Mini Battle</h3><div class="battle"><span>Más claro: #1</span><span>Más emocional: #2</span><span>Más curioso: #3</span></div><h3 style="margin-top:16px">Ganador</h3><p><b>#${data.ganador_numero} — ${escapeHtml(data.ganador||'')}</b></p><p>${escapeHtml(data.por_que_gana||'')}</p></div>
+    </div>`;
+    messages.appendChild(div); if(animate) scrollDown();
+  }
+
+  async function improve(headline){
+    const res = await fetch('/api/improve_headline', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({headline})});
+    if(!res.ok) throw new Error('Error del servidor');
+    return await res.json();
+  }
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const headline=headlineInput.value.trim();
+    if(headline.length<3) return;
+    addUserMessage(headline);
+    const loading=addLoading();
+    headlineInput.value=''; setReady();
+    try{
+      const result=await improve(headline);
+      loading.remove();
+      if(!result.ok) throw new Error(result.error||'No se pudo mejorar el titular');
+      addResultCards(result);
+      const title=headline.slice(0,34) || 'Titular';
+      const session={id:crypto.randomUUID(), title, date:today(), headline, result};
+      sessions=[session,...sessions.filter(s=>s.title!==title)].slice(0,30); currentId=session.id; saveSessions();
+    }catch(err){
+      loading.innerHTML=`<div class="bubble error">${escapeHtml(err.message||err)}</div>`;
+    }
+  });
+
+  headlineInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); form.requestSubmit(); }});
+  newBtn.addEventListener('click', newSession);
+  renderHistory(); setReady();
+</script>
 </body>
 </html>
