@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Headline Booster AI</title>
+  <style>
+    :root{
+      --bg:#f7f8fb;
+      --panel:#ffffff;
+      --sidebar:#ffffff;
+      --line:#e7e9ee;
+      --line-strong:#d9dde6;
+      --text:#172033;
+      --muted:#697386;
+      --soft:#f1f3f7;
+      --accent:#a8755e;
+      --accent-dark:#875741;
+      --accent-soft:#f4ebe6;
+      --danger:#e25555;
+      --shadow:0 16px 46px rgba(25,35,60,.08);
+      --radius:24px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+    body{overflow:hidden}
+    button,input,textarea{font:inherit}
+    button{cursor:pointer}
+    .app{display:grid;grid-template-columns:320px minmax(0,1fr);height:100vh;max-height:100vh;overflow:hidden;background:var(--bg)}
+    .sidebar{background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100vh;max-height:100vh;box-shadow:6px 0 26px rgba(25,35,60,.04);z-index:2}
+    .side-head{padding:22px 18px 18px;border-bottom:1px solid var(--line)}
+    .brand{font-weight:900;font-size:23px;letter-spacing:-.04em;display:flex;align-items:baseline;gap:5px}.brand span{color:var(--accent)}
+    .new-btn{width:100%;margin-top:18px;border:0;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:white;font-weight:800;padding:15px 18px;cursor:pointer;box-shadow:0 10px 22px rgba(168,117,94,.22);transition:.18s}
+    .new-btn:hover{transform:translateY(-1px)}
+    .history{flex:1;overflow:auto}.history-title{padding:16px 18px 6px;color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+    .session{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:17px 16px;border-bottom:1px solid var(--line);cursor:pointer;background:white}.session:hover{background:#fbfbfd}.session.active{background:var(--accent-soft)}
+    .session-name{font-size:15px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px}.session-date{font-size:13px;color:var(--muted);margin-top:4px}.trash{border:0;background:transparent;color:#9aa2af;font-size:18px;cursor:pointer;padding:5px}.trash:hover{color:var(--danger)}
+    .empty-history{padding:0 18px;color:#9aa2af;font-size:14px;line-height:1.45}
+
+    .main{display:flex;flex-direction:column;min-width:0;height:100vh;max-height:100vh;overflow:hidden}.content{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}.messages{flex:1;min-height:0;height:100%;overflow-y:auto;overflow-x:hidden;padding:26px 28px 190px;display:flex;flex-direction:column;gap:18px}.welcome{margin:auto;text-align:center;max-width:640px;padding:40px 20px}.avatar{width:176px;height:176px;border-radius:50%;background:linear-gradient(135deg,#b4846d,#744a38);display:grid;place-items:center;margin:0 auto 32px;box-shadow:var(--shadow)}.avatar-inner{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#ffd33d,#ff7d5e 70%,#d66bf0);display:grid;place-items:center;font-size:48px}.welcome h1{margin:0;font-size:32px;letter-spacing:-.04em}.welcome p{font-size:18px;color:var(--muted);line-height:1.55;margin:12px auto 0}
+    .msg{max-width:min(860px,94%);display:flex;flex-direction:column;gap:8px}.msg.user{align-self:flex-end}.msg.assistant{align-self:flex-start;width:min(860px,94%)}.bubble{border-radius:20px;padding:16px 18px;line-height:1.55;white-space:pre-wrap}.user .bubble{background:var(--accent);color:white;border-bottom-right-radius:6px}.assistant .bubble{background:white;border:1px solid var(--line);box-shadow:0 10px 28px rgba(25,35,60,.05);border-bottom-left-radius:6px}.meta{font-size:12px;color:var(--muted);padding:0 5px}.user .meta{text-align:right}
+    .cards{display:grid;gap:14px}.card{background:white;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 10px 28px rgba(25,35,60,.05)}.card h3{margin:0 0 12px;font-size:18px;letter-spacing:-.02em}.card p{line-height:1.55;color:#3d4655}.score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.score{background:var(--soft);border:1px solid var(--line);border-radius:13px;padding:12px}.score b{display:block;font-size:22px;margin-bottom:3px}.score small{font-size:12px;color:var(--muted)}.score span{font-size:12px;color:var(--muted);font-weight:800;text-transform:uppercase}.missing{margin:0;padding-left:20px;color:#3d4655;line-height:1.55}.versions{display:grid;gap:10px}.version{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start;background:#fbfbfd;border:1px solid var(--line);border-radius:14px;padding:12px;line-height:1.48}.num{width:34px;height:34px;border-radius:50%;background:var(--accent-soft);color:var(--accent-dark);display:grid;place-items:center;font-weight:900}.winner{background:linear-gradient(135deg,var(--accent-soft),#fff);border-color:#dfc2b4}.battle{display:flex;gap:8px;flex-wrap:wrap}.battle span{background:var(--soft);border:1px solid var(--line);border-radius:99px;padding:7px 10px;color:var(--muted);font-weight:750;font-size:13px}.question{margin-top:12px;color:var(--text);font-weight:800}.action-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.action-btn{border:0;border-radius:999px;background:var(--accent);color:white;font-weight:800;padding:10px 14px;box-shadow:0 10px 22px rgba(168,117,94,.18)}.action-btn.secondary{background:var(--soft);color:var(--muted);box-shadow:none}
+    .composer-wrap{position:fixed;left:320px;right:0;bottom:0;background:linear-gradient(180deg,rgba(247,248,251,0),rgba(247,248,251,.98) 26%,rgba(247,248,251,1));padding:32px 28px 20px;border-top:1px solid rgba(231,233,238,.8)}.composer{max-width:1060px;margin:0 auto;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}.input-box{background:#f0f1f4;border:1px solid transparent;border-radius:28px;padding:14px 18px;display:block}.input-box:focus-within{background:white;border-color:var(--line-strong);box-shadow:0 0 0 4px rgba(168,117,94,.08)}textarea{width:100%;border:0;background:transparent;outline:none;resize:none;min-height:58px;max-height:140px;font-size:16px;color:var(--text);line-height:1.45}.send{width:70px;height:70px;border:0;border-radius:22px;background:#cbd1db;color:#596273;font-size:32px;cursor:pointer;transition:.18s}.send.ready{background:var(--accent);color:white}.send.ready:hover{transform:translateY(-1px)}.hint{text-align:center;color:#9aa2af;font-size:13px;margin-top:12px}.error{color:var(--danger)}
+    .loading{display:inline-flex;gap:6px;align-items:center}.loading i{width:7px;height:7px;border-radius:50%;background:var(--accent);display:block;animation:bounce 1s infinite}.loading i:nth-child(2){animation-delay:.12s}.loading i:nth-child(3){animation-delay:.24s}@keyframes bounce{0%,80%,100%{transform:scale(.6);opacity:.45}40%{transform:scale(1);opacity:1}}
+    .messages.has-result{scrollbar-gutter:stable}.messages::-webkit-scrollbar,.history::-webkit-scrollbar{width:8px}.messages::-webkit-scrollbar-track,.history::-webkit-scrollbar-track{background:transparent}.messages::-webkit-scrollbar-thumb,.history::-webkit-scrollbar-thumb{background:rgba(168,117,94,.28);border-radius:99px}.messages{scrollbar-width:thin;scrollbar-color:rgba(168,117,94,.32) transparent}.history{scrollbar-width:thin;scrollbar-color:rgba(168,117,94,.25) transparent}
+    @media(max-width:850px){body{overflow:hidden}.app{grid-template-columns:1fr;height:100dvh;max-height:100dvh}.sidebar{display:none}.main{height:100dvh;max-height:100dvh}.composer-wrap{left:0}.messages{padding:20px 16px 160px;min-height:0;height:100%;overflow-y:auto}.score-grid{grid-template-columns:repeat(2,1fr)}.composer{grid-template-columns:1fr 58px}.send{width:58px;height:58px;border-radius:18px}.avatar{width:140px;height:140px}.avatar-inner{width:74px;height:74px;font-size:40px}.welcome{padding:28px 16px}.welcome h1{font-size:28px}.welcome p{font-size:16px}.msg,.msg.assistant{max-width:100%;width:100%}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="side-head">
+      <div class="brand">Headline Booster <span>AI</span></div>
+      <button class="new-btn" id="newBtn">+ Nuevo titular</button>
+    </div>
+    <div class="history" id="history"><div class="history-title">Historial local</div></div>
+  </aside>
+
+  <main class="main">
+    <section class="content">
+      <div class="messages" id="messages">
+        <div class="welcome" id="welcome">
+          <div class="avatar"><div class="avatar-inner">😊</div></div>
+          <h1>Headline Coach</h1>
+          <p>Pega un titular débil. El modelo pequeño lo diagnostica, crea 3 versiones mejores y elige el ganador.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="composer-wrap">
+      <form class="composer" id="form">
+        <div class="input-box">
+          <textarea id="headline" placeholder="Pega tu titular actual... Ej. Aprende Diseño Humano"></textarea>
+        </div>
+        <button class="send" id="sendBtn" type="submit">→</button>
+      </form>
+      <div class="hint">Presiona Enter para enviar · Shift+Enter para nueva línea · El historial se guarda solo en este navegador</div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const messages = document.getElementById('messages');
+  const welcome = document.getElementById('welcome');
+  const form = document.getElementById('form');
+  const headlineInput = document.getElementById('headline');
+  const sendBtn = document.getElementById('sendBtn');
+  const newBtn = document.getElementById('newBtn');
+  const historyEl = document.getElementById('history');
+  const STORAGE_KEY = 'headline_booster_sessions_v3';
+
+  let sessions = loadSessions();
+  let currentId = null;
+  let stage = 'headline';
+  let currentHeadline = '';
+  let currentAnalysis = null;
+  let currentProposals = [];
+  let currentWinner = null;
+
+  function loadSessions(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')}catch{return []}}
+  function saveSessions(){localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions.slice(0,30))); renderHistory();}
+  function today(){return new Date().toLocaleDateString('es-MX',{year:'numeric',month:'numeric',day:'numeric'});}
+  function escapeHtml(s){return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+  function scrollDown(){messages.scrollTop = messages.scrollHeight;}
+  function setReady(){sendBtn.classList.toggle('ready', headlineInput.value.trim().length>2);}
+  headlineInput.addEventListener('input', setReady);
+
+  function setPlaceholder(text){headlineInput.placeholder=text;}
+  function isYes(text){return /^(s[ií]|sí|si|claro|dale|ok|va|hazlo|adelante)/i.test(text.trim());}
+
+  function renderHistory(){
+    historyEl.innerHTML = '<div class="history-title">Historial local</div>';
+    if(!sessions.length){
+      historyEl.insertAdjacentHTML('beforeend','<p class="empty-history">Tus titulares optimizados aparecerán aquí.</p>');
+      return;
+    }
+    sessions.forEach(s=>{
+      const item = document.createElement('div');
+      item.className = 'session' + (s.id===currentId?' active':'');
+      item.innerHTML = `<div><div class="session-name">${escapeHtml(s.title)}</div><div class="session-date">${escapeHtml(s.date)}</div></div><button class="trash" title="Borrar">⌫</button>`;
+      item.addEventListener('click',()=>loadSession(s.id));
+      item.querySelector('.trash').addEventListener('click',(e)=>{e.stopPropagation(); sessions=sessions.filter(x=>x.id!==s.id); if(currentId===s.id){newSession()} saveSessions();});
+      historyEl.appendChild(item);
+    });
+  }
+
+  function newSession(){
+    currentId = null;
+    stage = 'headline';
+    currentHeadline = '';
+    currentAnalysis = null;
+    currentProposals = [];
+    currentWinner = null;
+    messages.innerHTML = '';
+    messages.classList.remove('has-result');
+    messages.appendChild(welcome);
+    welcome.style.display = 'block';
+    headlineInput.value=''; setReady();
+    setPlaceholder('Pega tu titular actual... Ej. Aprende Diseño Humano');
+    renderHistory();
+  }
+
+  function loadSession(id){
+    const s = sessions.find(x=>x.id===id); if(!s) return;
+    currentId=id; messages.innerHTML=''; welcome.style.display='none'; messages.classList.add('has-result');
+    stage = 'done';
+    currentHeadline = s.headline;
+    currentAnalysis = s.analysis || null;
+    currentProposals = s.proposals || s.result?.versiones || [];
+    currentWinner = s.winner || s.result || null;
+    addUserMessage(s.headline, false);
+    if(currentAnalysis) addAnalysisCards(currentAnalysis, false, false);
+    if(currentProposals.length) addProposalCards({versiones: currentProposals, pregunta_siguiente: 'Uso guardado en historial.'}, false, false);
+    if(currentWinner) addWinnerCards(currentWinner, false);
+    renderHistory(); scrollDown();
+  }
+
+  function addUserMessage(text, animate=true, meta='Usuario'){
+    welcome.style.display='none';
+    const div=document.createElement('div'); div.className='msg user';
+    div.innerHTML=`<div class="meta">${escapeHtml(meta)}</div><div class="bubble">${escapeHtml(text)}</div>`;
+    messages.appendChild(div); if(animate) scrollDown();
+  }
+
+  function addAssistantBubble(html, animate=true){
+    messages.classList.add('has-result');
+    const div=document.createElement('div'); div.className='msg assistant';
+    div.innerHTML=`<div class="bubble">${html}</div>`;
+    messages.appendChild(div); if(animate) scrollDown();
+    return div;
+  }
+
+  function addLoading(text='Trabajando...'){
+    return addAssistantBubble(`<span class="loading"><i></i><i></i><i></i></span> ${escapeHtml(text)}`);
+  }
+
+  function addAnalysisCards(data, animate=true, showActions=true){
+    messages.classList.add('has-result');
+    const d=data.diagnostico||{};
+    const r=data.radiografia||{};
+    const div=document.createElement('div'); div.className='msg assistant';
+    div.innerHTML=`<div class="cards">
+      <div class="card"><h3>Radiografía del titular</h3><div class="score-grid">
+        <div class="score"><b>${d.claridad ?? '-'}<small>/100</small></b><span>Claridad</span></div>
+        <div class="score"><b>${d.deseo ?? '-'}<small>/100</small></b><span>Deseo</span></div>
+        <div class="score"><b>${d.especificidad ?? '-'}<small>/100</small></b><span>Especificidad</span></div>
+        <div class="score"><b>${d.diferenciacion ?? '-'}<small>/100</small></b><span>Diferenciación</span></div>
+      </div></div>
+      <div class="card"><h3>Qué tiene</h3><ul class="missing">${(r.tiene||[]).map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul></div>
+      <div class="card"><h3>Qué no tiene</h3><ul class="missing">${(r.no_tiene||[]).map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul></div>
+      <div class="card"><h3>Qué le hace falta</h3><ul class="missing">${(r.le_hace_falta||[]).map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul><h3 style="margin-top:16px">Problema principal</h3><p>${escapeHtml(data.problema_principal||'')}</p>${showActions?`<div class="question">${escapeHtml(data.pregunta_siguiente||'¿Quieres que cree tres propuestas?')}</div><div class="action-row"><button class="action-btn" data-action="create-proposals">Sí, crea 3 propuestas</button><button class="action-btn secondary" data-action="wait-proposals">Todavía no</button></div>`:''}</div>
+    </div>`;
+    messages.appendChild(div); if(animate) scrollDown();
+  }
+
+  function addProposalCards(data, animate=true, askUsage=true){
+    messages.classList.add('has-result');
+    const versiones=data.versiones||[];
+    const div=document.createElement('div'); div.className='msg assistant';
+    div.innerHTML=`<div class="cards">
+      <div class="card"><h3>Tres propuestas de titulares</h3><div class="versions">${versiones.map((v,i)=>`<div class="version"><div class="num">${i+1}</div><div>${escapeHtml(v)}</div></div>`).join('')}</div>${askUsage?`<div class="question">${escapeHtml(data.pregunta_siguiente||'¿Para qué lo quieres o dónde lo vas a usar?')}</div>`:''}</div>
+    </div>`;
+    messages.appendChild(div); if(animate) scrollDown();
+  }
+
+  function addWinnerCards(data, animate=true){
+    messages.classList.add('has-result');
+    const div=document.createElement('div'); div.className='msg assistant';
+    div.innerHTML=`<div class="cards">
+      <div class="card"><h3>Uso declarado</h3><p>${escapeHtml(data.usage||'Uso general')}</p></div>
+      <div class="card"><h3>Mini Battle</h3><div class="battle"><span>Más claro: #1</span><span>Más emocional: #2</span><span>Más curioso: #3</span></div><h3 style="margin-top:16px">Ganador</h3><p><b>#${data.ganador_numero} — ${escapeHtml(data.ganador||'')}</b></p><p>${escapeHtml(data.por_que_gana||'')}</p></div>
+    </div>`;
+    messages.appendChild(div); if(animate) scrollDown();
+  }
+
+  async function postJson(url, body){
+    const res = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+    if(!res.ok) throw new Error('Error del servidor');
+    return await res.json();
+  }
+
+  async function requestAnalysis(headline){
+    const loading=addLoading('Radiografiando titular...');
+    const data=await postJson('/api/analyze_headline', {headline});
+    loading.remove();
+    currentAnalysis=data;
+    addAnalysisCards(data);
+    stage='confirm_proposals';
+    setPlaceholder('Responde “sí” para crear tres propuestas de titulares...');
+  }
+
+  async function requestProposals(){
+    const loading=addLoading('Creando tres propuestas...');
+    const data=await postJson('/api/create_proposals', {headline: currentHeadline});
+    loading.remove();
+    currentProposals=data.versiones||[];
+    addProposalCards(data);
+    stage='usage';
+    setPlaceholder('Dime para qué lo quieres o dónde lo vas a usar...');
+  }
+
+  async function requestWinner(usage){
+    const loading=addLoading('Escogiendo el mejor titular para ese uso...');
+    const data=await postJson('/api/choose_winner', {headline: currentHeadline, versiones: currentProposals, usage});
+    loading.remove();
+    currentWinner=data;
+    addWinnerCards(data);
+    const title=currentHeadline.slice(0,34)||'Titular';
+    const session={id:crypto.randomUUID(), title, date:today(), headline:currentHeadline, analysis:currentAnalysis, proposals:currentProposals, winner:data};
+    sessions=[session,...sessions.filter(s=>s.title!==title)].slice(0,30); currentId=session.id; saveSessions();
+    stage='done';
+    setPlaceholder('Pega otro titular o usa + Nuevo titular...');
+  }
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const text=headlineInput.value.trim();
+    if(text.length<2) return;
+    headlineInput.value=''; setReady();
+    try{
+      if(stage==='headline' || stage==='done'){
+        newSession();
+        currentHeadline=text;
+        addUserMessage(text, true, 'Titular original');
+        await requestAnalysis(text);
+      }else if(stage==='confirm_proposals'){
+        addUserMessage(text);
+        if(isYes(text)) await requestProposals();
+        else addAssistantBubble('Perfecto. Cuando quieras, responde <b>sí</b> y creo tres propuestas a partir de la radiografía.');
+      }else if(stage==='usage'){
+        addUserMessage(text, true, 'Uso / canal');
+        await requestWinner(text);
+      }
+    }catch(err){
+      addAssistantBubble(`<span class="error">${escapeHtml(err.message||err)}</span>`);
+    }
+  });
+
+  messages.addEventListener('click', async (e)=>{
+    const action=e.target?.dataset?.action;
+    if(action==='create-proposals'){
+      addUserMessage('Sí, crea 3 propuestas');
+      try{ await requestProposals(); }catch(err){ addAssistantBubble(`<span class="error">${escapeHtml(err.message||err)}</span>`); }
+    }
+    if(action==='wait-proposals'){
+      addUserMessage('Todavía no');
+      addAssistantBubble('Sin problema. La radiografía queda arriba; responde <b>sí</b> cuando quieras que cree las tres propuestas.');
+    }
+  });
+
+  headlineInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); form.requestSubmit(); }});
+  newBtn.addEventListener('click', newSession);
+  renderHistory(); setReady();
+</script>
+</body>
+</html>
