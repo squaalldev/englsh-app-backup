@@ -108,6 +108,16 @@ class HeadlineRequest(BaseModel):
     headline: str
 
 
+class ProposalRequest(BaseModel):
+    headline: str
+
+
+class WinnerRequest(BaseModel):
+    headline: str
+    versiones: list[str]
+    usage: str
+
+
 def should_use_real_model() -> bool:
     """Resolve runtime mode from USE_REAL_MODEL and Space environment."""
     if USE_REAL_MODEL == "true":
@@ -236,6 +246,124 @@ def missing_elements(headline: str, diagnostico: dict[str, int]) -> list[str]:
             items.append(item)
 
     return items[:4]
+
+
+def headline_strengths(headline: str, diagnostico: dict[str, int]) -> list[str]:
+    words = set(word_tokens(headline))
+    strengths: list[str] = []
+    if any(word in RESULT_WORDS for word in words):
+        strengths.append("Tiene una acción o intención inicial que se puede convertir en promesa.")
+    if any(word in AUDIENCE_MARKERS for word in words):
+        strengths.append("Incluye una señal de audiencia o contexto de uso.")
+    if has_number(headline):
+        strengths.append("Usa un número, lo que ayuda a hacerlo más concreto.")
+    if re.search(r"[?¿]", headline):
+        strengths.append("Usa formato de pregunta, útil para despertar curiosidad.")
+    if not strengths:
+        strengths.append("Tiene una idea base simple y fácil de reescribir.")
+    if diagnostico["claridad"] >= 60:
+        strengths.append("La estructura no está demasiado cargada; se puede entender rápido.")
+    return strengths[:4]
+
+
+def headline_absences(headline: str, diagnostico: dict[str, int]) -> list[str]:
+    words = set(word_tokens(headline))
+    lower = headline.lower()
+    absences: list[str] = []
+    if not any(word in RESULT_WORDS for word in words):
+        absences.append("No muestra con claridad qué resultado obtiene la persona.")
+    if not any(word in AUDIENCE_MARKERS for word in words):
+        absences.append("No deja claro para quién está pensado.")
+    if not any(word in EMOTION_MARKERS for word in words):
+        absences.append("No contiene tensión emocional, deseo o dolor específico.")
+    if not ("sin " in lower or "aunque " in lower or "método" in lower or "sistema" in lower):
+        absences.append("No ofrece un ángulo distinto o una razón para hacer clic.")
+    if len(word_tokens(headline)) <= 3:
+        absences.append("Es tan corto que no da suficiente información para convencer.")
+    defaults = [
+        "No convierte el tema en una promesa concreta.",
+        "No anticipa el beneficio principal frente a otras opciones.",
+    ]
+    for item in defaults:
+        if len(absences) >= 4:
+            break
+        absences.append(item)
+    return absences[:4]
+
+
+def analyze_headline(headline: str) -> dict[str, Any]:
+    titular = clean_headline(headline)
+    if not titular:
+        raise ValueError("headline is required")
+    diagnostico = diagnose_headline(titular)
+    return {
+        "ok": True,
+        "app_build": APP_BUILD,
+        "step": "analisis",
+        "titular_original": titular,
+        "diagnostico": diagnostico,
+        "radiografia": {
+            "tiene": headline_strengths(titular, diagnostico),
+            "no_tiene": headline_absences(titular, diagnostico),
+            "le_hace_falta": missing_elements(titular, diagnostico),
+        },
+        "problema_principal": detect_main_problem(titular, diagnostico),
+        "pregunta_siguiente": "¿Quieres que cree tres propuestas de titulares mejorados a partir de esta radiografía?",
+    }
+
+
+def generate_proposals(headline: str) -> dict[str, Any]:
+    titular = clean_headline(headline)
+    if not titular:
+        raise ValueError("headline is required")
+    generated, runtime = model_or_mock_payload(titular)
+    return {
+        "ok": True,
+        "app_build": APP_BUILD,
+        "step": "propuestas",
+        "runtime": runtime,
+        "model_id": MODEL_ID,
+        "titular_original": titular,
+        "versiones": generated["versiones"],
+        "pregunta_siguiente": "¿Para qué lo quieres o dónde lo vas a usar? Así puedo ayudarte a escoger el mejor.",
+    }
+
+
+def choose_winner(headline: str, versiones: list[str], usage: str) -> dict[str, Any]:
+    titular = clean_headline(headline)
+    clean_versions = [str(item).strip() for item in versiones if str(item).strip()][:3]
+    if not titular:
+        raise ValueError("headline is required")
+    if len(clean_versions) < 3:
+        clean_versions = (clean_versions + mock_model_payload(titular)["versiones"])[:3]
+    uso = clean_headline(usage) or "uso general"
+    lower_usage = uso.lower()
+
+    if any(word in lower_usage for word in ("anuncio", "ads", "landing", "web", "venta", "checkout", "página")):
+        winner = 1
+        reason = "Para ese uso gana la versión más clara, porque reduce fricción y comunica rápido qué obtiene la persona."
+    elif any(word in lower_usage for word in ("instagram", "redes", "email", "correo", "story", "historia", "comunidad")):
+        winner = 2
+        reason = "Para ese canal gana la versión emocional, porque conecta mejor con deseo, tensión y sensación de identificación."
+    elif any(word in lower_usage for word in ("blog", "youtube", "newsletter", "contenido", "post", "artículo")):
+        winner = 3
+        reason = "Para contenido gana la versión curiosa, porque abre una pregunta y aumenta las ganas de seguir leyendo."
+    else:
+        winner = 1
+        reason = "Gana la versión más clara porque es la más segura para un uso general: comunica el tema y la promesa con menos esfuerzo."
+
+    return {
+        "ok": True,
+        "app_build": APP_BUILD,
+        "step": "ganador",
+        "titular_original": titular,
+        "usage": uso,
+        "versiones": clean_versions,
+        "mini_battle": {"mas_claro": 1, "mas_emocional": 2, "mas_curioso": 3},
+        "ganador_numero": winner,
+        "ganador": clean_versions[winner - 1],
+        "por_que_gana": reason,
+    }
 
 
 def headline_topic(headline: str) -> str:
@@ -432,6 +560,33 @@ def health() -> JSONResponse:
             "model_id": MODEL_ID,
         }
     )
+
+
+@server.post("/api/analyze_headline")
+def analyze_headline_endpoint(payload: HeadlineRequest) -> JSONResponse:
+    try:
+        result = analyze_headline(payload.headline)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return JSONResponse(result)
+
+
+@server.post("/api/create_proposals")
+def create_proposals_endpoint(payload: ProposalRequest) -> JSONResponse:
+    try:
+        result = generate_proposals(payload.headline)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return JSONResponse(result)
+
+
+@server.post("/api/choose_winner")
+def choose_winner_endpoint(payload: WinnerRequest) -> JSONResponse:
+    try:
+        result = choose_winner(payload.headline, payload.versiones, payload.usage)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return JSONResponse(result)
 
 
 @server.post("/api/improve_headline")

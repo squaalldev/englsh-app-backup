@@ -30,8 +30,8 @@ The app does not copy unrelated product logic. It does not include:
 
 ## How it is used in this app
 
-The visual layer now lives entirely in `index.html`. The file contains the markup, styles, and JavaScript needed for the interface. It calls `fetch('/api/improve_headline')` and stores user sessions in `localStorage` so each browser has its own private local history.
+The visual layer now lives entirely in `index.html`. The file contains the markup, styles, and JavaScript needed for the interface. It calls the step-based API (`/api/analyze_headline`, `/api/create_proposals`, and `/api/choose_winner`) and stores completed sessions in `localStorage` so each browser has its own private local history.
 
 ## Responsive strategy
 
-The layout now follows a compact app-shell pattern: a fixed 320px desktop sidebar, a scrollable message column, bubble-style user/assistant messages, a fixed composer offset by the sidebar, and mobile rules that hide the sidebar and keep the composer full-width. This avoids the oversized spacing from the earlier full-page hero implementation.
+The layout now follows a compact app-shell pattern: a fixed 320px desktop sidebar, a scrollable message column, bubble-style user/assistant messages, step-by-step assistant questions, a fixed composer offset by the sidebar, and mobile rules that hide the sidebar and keep the composer full-width. This avoids the oversized spacing from the earlier full-page hero implementation.

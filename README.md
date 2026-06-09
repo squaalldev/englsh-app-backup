@@ -20,15 +20,11 @@ The user pastes a single headline, for example:
 Aprende Diseño Humano
 ```
 
-The backend always returns:
+The app now works in three conversational steps:
 
-1. Diagnosis scores for clarity, desire, specificity, and differentiation
-2. The main problem with the headline
-3. Four missing elements
-4. Three improved versions
-5. A mini battle
-6. The winning headline
-7. A short explanation of why it wins
+1. First it analyzes the headline as a radiography: what it has, what it does not have, and what it needs.
+2. Then it asks whether the user wants three improved headline proposals.
+3. After creating the proposals, it asks where the headline will be used so it can choose the best winner for that context.
 
 ## How to run locally
 
@@ -45,9 +41,21 @@ Then open the local URL printed by Gradio, usually `http://127.0.0.1:7860`.
 
 Returns runtime metadata and confirms that the app is alive.
 
+### `POST /api/analyze_headline`
+
+Returns the headline radiography: scores, what it has, what it lacks, what it needs, and the next question.
+
+### `POST /api/create_proposals`
+
+Returns three improved headline proposals after the user confirms they want them.
+
+### `POST /api/choose_winner`
+
+Receives the headline, the three proposals, and where the user will use it, then returns the recommended winner.
+
 ### `POST /api/improve_headline`
 
-Request:
+Legacy one-shot endpoint kept for compatibility. Request:
 
 ```json
 {

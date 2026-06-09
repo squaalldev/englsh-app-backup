@@ -15,7 +15,7 @@ Those pieces did not match the new product goal: a small-model headline optimize
 - `index.html` owns the complete frontend: HTML, CSS, JavaScript, local browser history, layout, and rendering.
 - `app.py` is backend/API only, implemented with `gradio.Server` instead of `gr.Blocks()`.
 - Browser history is stored in `localStorage`; the backend does not store sessions.
-- The endpoint `POST /api/improve_headline` receives only `{ "headline": "..." }`.
+- The frontend now uses step-based endpoints: `POST /api/analyze_headline`, `POST /api/create_proposals`, and `POST /api/choose_winner`. The one-shot `POST /api/improve_headline` remains for compatibility.
 
 ## What was reused
 
@@ -47,7 +47,7 @@ Those pieces did not match the new product goal: a small-model headline optimize
 
 ## Output contract
 
-The backend guarantees the same JSON shape for every valid headline. The deterministic backend calculates diagnosis, main problem, missing elements, mini battle, and final winner fields. The model is only asked for three improved versions, winner number, and a short reason.
+The backend splits the experience into a guided conversation. It first returns a radiography of the headline, then creates three proposals only after user confirmation, then asks for the intended use before selecting a winner. The model is only asked for the proposal-generation part; diagnosis and winner choice are backend-controlled.
 
 ## Current status
 
