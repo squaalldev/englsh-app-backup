@@ -180,7 +180,7 @@
     const r=data.radiografia||{};
     const div=document.createElement('div'); div.className='msg assistant';
     div.innerHTML=`<div class="cards">
-      <div class="card"><h3>Radiografía del titular</h3><div class="score-grid">
+      <div class="card"><h3>Rayos X del titular</h3><div class="score-grid">
         <div class="score"><b>${d.claridad ?? '-'}<small>/100</small></b><span>Claridad</span></div>
         <div class="score"><b>${d.deseo ?? '-'}<small>/100</small></b><span>Deseo</span></div>
         <div class="score"><b>${d.especificidad ?? '-'}<small>/100</small></b><span>Especificidad</span></div>
@@ -220,7 +220,7 @@
   }
 
   async function requestAnalysis(headline){
-    const loading=addLoading('Radiografiando titular...');
+    const loading=addLoading('Haciendo rayos X del titular...');
     const data=await postJson('/api/analyze_headline', {headline});
     loading.remove();
     currentAnalysis=data;
@@ -266,7 +266,7 @@
       }else if(stage==='confirm_proposals'){
         addUserMessage(text);
         if(isYes(text)) await requestProposals();
-        else addAssistantBubble('Perfecto. Cuando quieras, responde <b>sí</b> y creo tres propuestas a partir de la radiografía.');
+        else addAssistantBubble('Perfecto. Cuando quieras, responde <b>sí</b> y creo tres propuestas a partir del análisis.');
       }else if(stage==='usage'){
         addUserMessage(text, true, 'Uso / canal');
         await requestWinner(text);
@@ -284,7 +284,7 @@
     }
     if(action==='wait-proposals'){
       addUserMessage('Todavía no');
-      addAssistantBubble('Sin problema. La radiografía queda arriba; responde <b>sí</b> cuando quieras que cree las tres propuestas.');
+      addAssistantBubble('Sin problema. El análisis queda arriba; responde <b>sí</b> cuando quieras que cree las tres propuestas.');
     }
   });
 

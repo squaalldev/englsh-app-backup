@@ -32,7 +32,7 @@ The product is no longer a generic headline generator. It is a narrow optimizer:
 weak headline → deterministic diagnosis → 3 improved versions → mini battle → winner
 ```
 
-The model only generates:
+The model only receives a compact JSON user prompt with the original headline, the detected main problem, and the missing elements. It only generates:
 
 - three improved versions;
 - a winner number from 1 to 3;

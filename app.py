@@ -103,6 +103,33 @@ WEAK_PREFIXES = (
     "webinar de",
 )
 
+VAGUE_TOPIC_WORDS = {"curso", "taller", "clase", "programa", "mentoría", "guía", "aprende", "descubre"}
+BENEFIT_MARKERS = RESULT_WORDS | {"ahorra", "domina", "resuelve", "multiplica", "mejor", "más", "menos"}
+SPECIFIC_DETAIL_MARKERS = AUDIENCE_MARKERS | {"en", "con", "desde", "pasos", "días", "semanas", "método", "sistema"}
+CURIOSITY_MARKERS = {"?", "¿", "secreto", "error", "mito", "verdad", "nadie", "inesperado", "contrario", "aunque", "sin"}
+
+SYSTEM_PROMPT = """
+Eres Headline Booster AI, copywriter experto en mejorar titulares, hooks y líneas de asunto en español.
+
+OBJETIVO:
+Convertir un titular débil en 3 versiones claras, creíbles y más atractivas.
+
+REGLAS:
+- Mejora el titular existente; no inventes otra oferta.
+- Sé breve, natural y específico.
+- Evita frases genéricas o exageradas.
+- No expliques las versiones.
+- Responde SOLO JSON válido.
+
+CREA EXACTAMENTE 3 VERSIONES USANDO ESTAS FÓRMULAS:
+1. Clara/directa = resultado deseado + mecanismo o tema.
+2. Emocional = síntoma o frustración + alivio/deseo.
+3. Curiosa = pregunta, contraste o secreto + tensión.
+
+FORMATO:
+{"versiones":["","",""],"ganador_numero":1,"por_que_gana":""}
+""".strip()
+
 
 class HeadlineRequest(BaseModel):
     headline: str
@@ -145,56 +172,69 @@ def has_number(text: str) -> bool:
 
 
 def diagnose_headline(headline: str) -> dict[str, int]:
-    """Deterministically score headline quality without model dependence."""
+    """Compact deterministic X-ray score for four persuasive criteria."""
     words = word_tokens(headline)
+    word_set = set(words)
     word_count = len(words)
     lower = headline.lower()
 
-    clarity = 35
-    if 4 <= word_count <= 14:
-        clarity += 30
+    names_topic_only = word_count <= 4 and not any(token in lower for token in ("para ", "sin ", "con ", "en "))
+    has_benefit = any(word in BENEFIT_MARKERS for word in word_set) or any(
+        token in lower for token in ("para ", "sin ", "mejor", "más", "menos")
+    )
+    has_emotion = any(word in EMOTION_MARKERS for word in word_set) or any(
+        token in lower for token in ("deja de", "evita", "siente", "miedo", "duda", "frustr")
+    )
+    has_specific = has_number(headline) or any(word in SPECIFIC_DETAIL_MARKERS for word in word_set)
+    has_angle = any(marker in lower for marker in CURIOSITY_MARKERS) or bool(re.search(r"[?¿]", headline))
+    has_audience = any(word in AUDIENCE_MARKERS for word in word_set)
+    vague_count = sum(1 for word in word_set if word in VAGUE_TOPIC_WORDS)
+
+    clarity = 30
+    if 5 <= word_count <= 14:
+        clarity += 28
     elif 15 <= word_count <= 22:
         clarity += 18
-    elif word_count > 22:
-        clarity += 6
-    if any(word in RESULT_WORDS for word in words):
-        clarity += 12
-    if re.search(r"[?¿]", headline):
-        clarity += 4
-    if word_count <= 3:
-        clarity -= 15
+    elif word_count <= 4:
+        clarity -= 12
+    if has_benefit:
+        clarity += 24
+    if vague_count and not has_benefit:
+        clarity -= 10
+    if names_topic_only:
+        clarity -= 12
 
-    desire = 28
-    if any(word in RESULT_WORDS for word in words):
-        desire += 24
-    if any(word in EMOTION_MARKERS for word in words):
-        desire += 20
-    if "sin " in lower or "para " in lower:
+    desire = 25
+    if has_emotion:
+        desire += 30
+    if has_benefit:
+        desire += 16
+    if any(word in word_set for word in {"alivio", "confianza", "claridad", "ventas", "clientes"}):
         desire += 10
-    if has_number(headline):
-        desire += 6
+    if names_topic_only:
+        desire -= 10
 
-    specificity = 25
-    if any(word in AUDIENCE_MARKERS for word in words):
+    specificity = 24
+    if has_audience:
         specificity += 24
+    if has_specific:
+        specificity += 22
     if has_number(headline):
-        specificity += 20
-    if word_count >= 7:
         specificity += 12
-    if any(token in lower for token in ("para ", "en ", "con ", "desde ")):
-        specificity += 10
+    if word_count >= 8:
+        specificity += 8
+    if names_topic_only:
+        specificity -= 12
 
-    differentiation = 25
-    if any(word in DIFFERENTIATION_MARKERS for word in words):
-        differentiation += 18
-    if re.search(r"[?¿]", headline):
-        differentiation += 18
+    differentiation = 24
+    if has_angle:
+        differentiation += 28
     if "sin " in lower or "aunque " in lower:
-        differentiation += 20
-    if any(word in EMOTION_MARKERS for word in words):
-        differentiation += 10
-    if has_number(headline):
-        differentiation += 8
+        differentiation += 16
+    if any(word in word_set for word in {"método", "sistema", "secreto", "error", "mito"}):
+        differentiation += 12
+    if not has_angle and names_topic_only:
+        differentiation -= 10
 
     return {
         "claridad": clamp_score(clarity),
@@ -205,15 +245,16 @@ def diagnose_headline(headline: str) -> dict[str, int]:
 
 
 def detect_main_problem(headline: str, diagnostico: dict[str, int]) -> str:
+    if len(word_tokens(headline)) <= 4:
+        return "El titular dice el tema, pero no dice por qué debería importarle a la persona."
+
     weakest = min(diagnostico, key=diagnostico.get)
     explanations = {
-        "claridad": "El titular todavía no comunica con suficiente rapidez qué obtiene la persona al seguir leyendo.",
-        "deseo": "El titular necesita conectar mejor con un deseo, alivio o transformación concreta para resultar más atractivo.",
-        "especificidad": "El titular es demasiado amplio: falta una audiencia, situación o resultado más concreto.",
-        "diferenciacion": "El titular suena genérico y necesita un ángulo más distintivo para no parecerse a cualquier otra promesa.",
+        "claridad": "El titular no comunica con suficiente claridad qué cambio promete.",
+        "deseo": "El titular dice algo, pero no despierta suficiente interés emocional.",
+        "especificidad": "El titular es demasiado general y no aterriza para quién es ni qué resultado ofrece.",
+        "diferenciacion": "El titular se entiende, pero suena genérico y necesita un ángulo más propio.",
     }
-    if len(word_tokens(headline)) <= 3:
-        return "El titular es muy corto y deja demasiadas preguntas abiertas sobre beneficio, audiencia y razón para hacer clic."
     return explanations[weakest]
 
 
@@ -222,73 +263,67 @@ def missing_elements(headline: str, diagnostico: dict[str, int]) -> list[str]:
     lower = headline.lower()
     items: list[str] = []
 
-    if not any(word in RESULT_WORDS for word in words):
-        items.append("Un resultado deseado que la persona pueda imaginar de inmediato.")
-    if not any(word in AUDIENCE_MARKERS for word in words):
-        items.append("Una audiencia o situación concreta para que el mensaje se sienta dirigido.")
-    if not any(word in EMOTION_MARKERS for word in words):
-        items.append("Tensión emocional: dolor, deseo, alivio, urgencia o una objeción clara.")
-    if not ("sin " in lower or "aunque " in lower or re.search(r"[?¿]", headline)):
-        items.append("Un ángulo diferenciador que prometa una forma distinta de lograr el resultado.")
-    if not has_number(headline) and diagnostico["especificidad"] < 70:
-        items.append("Más concreción: número, plazo, mecanismo, paso o contexto específico.")
+    if diagnostico["claridad"] < 62:
+        items.append("Una promesa más clara")
+    if not any(word in BENEFIT_MARKERS for word in words):
+        items.append("Un resultado concreto")
+    if diagnostico["especificidad"] < 62 or not any(word in AUDIENCE_MARKERS for word in words):
+        items.append("Una audiencia más definida")
+    if diagnostico["deseo"] < 62 or not any(word in EMOTION_MARKERS for word in words):
+        items.append("Una situación emocional reconocible")
+    if diagnostico["diferenciacion"] < 62:
+        items.append("Un ángulo menos genérico")
+    if not ("?" in headline or "¿" in headline or "secreto" in lower or "error" in lower):
+        items.append("Más curiosidad")
+    if not ("sin " in lower or "aunque " in lower):
+        items.append("Un contraste más fuerte")
+    if len(word_tokens(headline)) <= 4:
+        items.append("Una razón para seguir leyendo")
 
-    defaults = [
-        "Una promesa más directa que explique por qué vale la pena leer ahora.",
-        "Un lenguaje menos genérico y más orientado a beneficio.",
-        "Un contraste entre la situación actual y el resultado esperado.",
-        "Una razón clara para elegir esta solución frente a otras opciones.",
+    fallback_items = [
+        "Un resultado concreto",
+        "Una audiencia más definida",
+        "Una razón para seguir leyendo",
+        "Una promesa más clara",
     ]
-    for item in defaults:
-        if len(items) >= 4:
+    unique: list[str] = []
+    for item in items + fallback_items:
+        if item not in unique:
+            unique.append(item)
+        if len(unique) >= 4:
             break
-        if item not in items:
-            items.append(item)
-
-    return items[:4]
+    return unique[:4] if len(unique) >= 4 else unique
 
 
 def headline_strengths(headline: str, diagnostico: dict[str, int]) -> list[str]:
     words = set(word_tokens(headline))
     strengths: list[str] = []
-    if any(word in RESULT_WORDS for word in words):
-        strengths.append("Tiene una acción o intención inicial que se puede convertir en promesa.")
+    if any(word in BENEFIT_MARKERS for word in words):
+        strengths.append("Tiene una intención o beneficio inicial.")
     if any(word in AUDIENCE_MARKERS for word in words):
-        strengths.append("Incluye una señal de audiencia o contexto de uso.")
-    if has_number(headline):
-        strengths.append("Usa un número, lo que ayuda a hacerlo más concreto.")
-    if re.search(r"[?¿]", headline):
-        strengths.append("Usa formato de pregunta, útil para despertar curiosidad.")
+        strengths.append("Incluye una señal de audiencia.")
+    if has_number(headline) or any(word in SPECIFIC_DETAIL_MARKERS for word in words):
+        strengths.append("Aporta algún detalle específico.")
+    if re.search(r"[?¿]", headline) or any(marker in headline.lower() for marker in CURIOSITY_MARKERS):
+        strengths.append("Tiene una señal de curiosidad o contraste.")
     if not strengths:
-        strengths.append("Tiene una idea base simple y fácil de reescribir.")
-    if diagnostico["claridad"] >= 60:
-        strengths.append("La estructura no está demasiado cargada; se puede entender rápido.")
+        strengths.append("Tiene una idea base simple para mejorar.")
     return strengths[:4]
 
 
 def headline_absences(headline: str, diagnostico: dict[str, int]) -> list[str]:
-    words = set(word_tokens(headline))
-    lower = headline.lower()
-    absences: list[str] = []
-    if not any(word in RESULT_WORDS for word in words):
-        absences.append("No muestra con claridad qué resultado obtiene la persona.")
-    if not any(word in AUDIENCE_MARKERS for word in words):
-        absences.append("No deja claro para quién está pensado.")
-    if not any(word in EMOTION_MARKERS for word in words):
-        absences.append("No contiene tensión emocional, deseo o dolor específico.")
-    if not ("sin " in lower or "aunque " in lower or "método" in lower or "sistema" in lower):
-        absences.append("No ofrece un ángulo distinto o una razón para hacer clic.")
-    if len(word_tokens(headline)) <= 3:
-        absences.append("Es tan corto que no da suficiente información para convencer.")
-    defaults = [
-        "No convierte el tema en una promesa concreta.",
-        "No anticipa el beneficio principal frente a otras opciones.",
-    ]
-    for item in defaults:
-        if len(absences) >= 4:
-            break
-        absences.append(item)
-    return absences[:4]
+    missing = missing_elements(headline, diagnostico)
+    mapping = {
+        "Una promesa más clara": "No comunica una promesa reconocible.",
+        "Un resultado concreto": "No muestra un resultado concreto.",
+        "Una audiencia más definida": "No deja claro para quién es.",
+        "Una situación emocional reconocible": "No conecta con síntoma, frustración o deseo.",
+        "Un ángulo menos genérico": "No tiene un ángulo propio.",
+        "Más curiosidad": "No da una razón clara para seguir leyendo.",
+        "Un contraste más fuerte": "No plantea contraste o tensión.",
+        "Una razón para seguir leyendo": "No explica por qué debería importarle al lector.",
+    }
+    return [mapping.get(item, item) for item in missing[:4]]
 
 
 def analyze_headline(headline: str) -> dict[str, Any]:
@@ -296,6 +331,7 @@ def analyze_headline(headline: str) -> dict[str, Any]:
     if not titular:
         raise ValueError("headline is required")
     diagnostico = diagnose_headline(titular)
+    falta = missing_elements(titular, diagnostico)
     return {
         "ok": True,
         "app_build": APP_BUILD,
@@ -305,9 +341,10 @@ def analyze_headline(headline: str) -> dict[str, Any]:
         "radiografia": {
             "tiene": headline_strengths(titular, diagnostico),
             "no_tiene": headline_absences(titular, diagnostico),
-            "le_hace_falta": missing_elements(titular, diagnostico),
+            "le_hace_falta": falta,
         },
         "problema_principal": detect_main_problem(titular, diagnostico),
+        "falta": falta,
         "pregunta_siguiente": "¿Quieres que cree tres propuestas de titulares mejorados a partir de esta radiografía?",
     }
 
@@ -316,7 +353,10 @@ def generate_proposals(headline: str) -> dict[str, Any]:
     titular = clean_headline(headline)
     if not titular:
         raise ValueError("headline is required")
-    generated, runtime = model_or_mock_payload(titular)
+    diagnostico = diagnose_headline(titular)
+    problema = detect_main_problem(titular, diagnostico)
+    falta = missing_elements(titular, diagnostico)
+    generated, runtime = model_or_mock_payload(titular, problema, falta)
     return {
         "ok": True,
         "app_build": APP_BUILD,
@@ -393,16 +433,14 @@ def mock_model_payload(headline: str) -> dict[str, Any]:
     }
 
 
-def build_model_prompt(headline: str) -> str:
-    return (
-        "Eres un copywriter especialista en titulares. Responde SOLO JSON válido, "
-        "sin markdown ni texto adicional. No diagnostiques ni puntúes. Genera exactamente "
-        "3 versiones mejoradas del titular: una clara/directa, una emocional y una curiosa. "
-        "Elige ganador_numero como 1, 2 o 3 y explica brevemente por qué gana.\n\n"
-        "Formato obligatorio:\n"
-        '{"versiones":["versión clara/directa","versión emocional","versión curiosa"],'
-        '"ganador_numero":1,"por_que_gana":"explicación breve"}\n\n'
-        f"Titular original: {headline}"
+def build_model_prompt(headline: str, problema_principal: str, falta: list[str]) -> str:
+    return json.dumps(
+        {
+            "titular_original": headline,
+            "problema": problema_principal,
+            "falta": falta[:4],
+        },
+        ensure_ascii=False,
     )
 
 
@@ -435,17 +473,17 @@ def extract_json_object(text: str) -> dict[str, Any]:
     return json.loads(match.group(0))
 
 
-def _generate_model_payload(headline: str) -> dict[str, Any]:
+def _generate_model_payload(headline: str, problema_principal: str, falta: list[str]) -> dict[str, Any]:
     tokenizer, model, torch = get_tiny_model()
-    prompt = build_model_prompt(headline)
+    user_prompt = build_model_prompt(headline, problema_principal, falta)
     messages = [
-        {"role": "system", "content": "Responde únicamente JSON válido."},
-        {"role": "user", "content": prompt},
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_prompt},
     ]
     if hasattr(tokenizer, "apply_chat_template"):
         rendered = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
     else:
-        rendered = prompt
+        rendered = f"{SYSTEM_PROMPT}\n\n{user_prompt}"
     inputs = tokenizer(rendered, return_tensors="pt").to(model.device)
     with torch.no_grad():
         output_ids = model.generate(
@@ -495,12 +533,17 @@ def validate_model_payload(candidate: dict[str, Any], headline: str) -> dict[str
     return {"versiones": versions, "ganador_numero": winner, "por_que_gana": reason}
 
 
-def model_or_mock_payload(headline: str) -> tuple[dict[str, Any], str]:
+def model_or_mock_payload(
+    headline: str, problema_principal: str | None = None, falta: list[str] | None = None
+) -> tuple[dict[str, Any], str]:
+    problema = problema_principal or detect_main_problem(headline, diagnose_headline(headline))
+    faltantes = falta or missing_elements(headline, diagnose_headline(headline))
+
     if not should_use_real_model():
         return validate_model_payload(mock_model_payload(headline), headline), "mock"
 
     try:
-        model_payload = generate_model_payload(headline)
+        model_payload = generate_model_payload(headline, problema, faltantes)
         return validate_model_payload(model_payload, headline), "model"
     except Exception:
         return validate_model_payload(mock_model_payload(headline), headline), "mock"
@@ -514,7 +557,7 @@ def improve_headline(headline: str) -> dict[str, Any]:
     diagnostico = diagnose_headline(titular)
     problema = detect_main_problem(titular, diagnostico)
     falta = missing_elements(titular, diagnostico)
-    generated, runtime = model_or_mock_payload(titular)
+    generated, runtime = model_or_mock_payload(titular, problema, falta)
     versiones = generated["versiones"]
     ganador_numero = generated["ganador_numero"]
     ganador = versiones[ganador_numero - 1]

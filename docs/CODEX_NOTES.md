@@ -47,7 +47,7 @@ Those pieces did not match the new product goal: a small-model headline optimize
 
 ## Output contract
 
-The backend splits the experience into a guided conversation. It first returns a radiography of the headline, then creates three proposals only after user confirmation, then asks for the intended use before selecting a winner. The model is only asked for the proposal-generation part; diagnosis and winner choice are backend-controlled.
+The backend splits the experience into a guided conversation. It first returns a compact persuasive X-ray of the headline, then creates three proposals only after user confirmation, then asks for the intended use before selecting a winner. The model is only asked for the proposal-generation part; diagnosis and winner choice are backend-controlled.
 
 ## Current status
 

@@ -22,7 +22,7 @@ Aprende Diseño Humano
 
 The app now works in three conversational steps:
 
-1. First it analyzes the headline as a radiography: what it has, what it does not have, and what it needs.
+1. First it analyzes the headline as a compact persuasive X-ray: what it has, what it does not have, and what it needs.
 2. Then it asks whether the user wants three improved headline proposals.
 3. After creating the proposals, it asks where the headline will be used so it can choose the best winner for that context.
 
@@ -43,7 +43,7 @@ Returns runtime metadata and confirms that the app is alive.
 
 ### `POST /api/analyze_headline`
 
-Returns the headline radiography: scores, what it has, what it lacks, what it needs, and the next question.
+Returns the compact X-ray: scores, main problem, 3 to 4 missing elements, what it has, and the next question.
 
 ### `POST /api/create_proposals`
 
